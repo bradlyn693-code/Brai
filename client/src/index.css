@@ -107,12 +107,9 @@ button:not(:disabled):active { transform: scale(.97); }
 .checkbox-label input { width: 16px; height: 16px; accent-color: var(--rose); }
 .form-row .text-link { color: #aa8492; font-size: 11px; font-weight: 600; }
 .form-error { margin: -4px 0 -3px; color: #dd3f52; font-size: 12px; }
-.demo-button { min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid #f3d1d8; border-radius: 12px; color: #8a6878; background: white; cursor: pointer; font-size: 13px; font-weight: 600; }
-.demo-button:hover, .social-button:hover { border-color: var(--line); color: var(--rose); background: #fff7f8; }
 .divider { display: flex; align-items: center; gap: 12px; color: #c1aeb8; font-size: 10px; text-transform: uppercase; letter-spacing: .1em; }
 .divider::before, .divider::after { content: ''; height: 1px; flex: 1; background: #f0dce1; }
 .social-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.social-button { min-height: 43px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid #f1dbe0; border-radius: 12px; color: #806d7c; background: white; cursor: pointer; font-size: 12px; font-weight: 600; }
 .google-g { color: #4285f4; font-size: 16px; font-weight: 700; }
 .apple-mark { color: #1a102e; font-size: 14px; }
 .auth-switch { margin: 3px 0 0; color: #a094b8; text-align: center; font-size: 12px; }
