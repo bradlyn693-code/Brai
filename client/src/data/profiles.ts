@@ -1,0 +1,161 @@
+export type AfricanProfile = {
+  id: number;
+  name: string;
+  age: number;
+  city: string;
+  distance: number;
+  role: string;
+  bio: string;
+  interests: string[];
+  verified: boolean;
+  online: boolean;
+  images: string[];
+  match: number;
+};
+
+const photo = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=600&q=86`;
+
+export const africanProfiles: AfricanProfile[] = [
+  {
+    id: 1,
+    name: "Amara",
+    age: 27,
+    city: "Nairobi",
+    distance: 4,
+    role: "Product designer",
+    bio: "Soft life, big dreams, and a camera roll full of Nairobi sunsets. I like people who make ordinary days feel special.",
+    interests: ["Coffee", "Design", "Travel", "Live music"],
+    verified: true,
+    online: true,
+    images: [photo("photo-1544005313-94ddf0286df2"), photo("photo-1524504388940-b1c1722653e1"), photo("photo-1517841905240-472988babdf9")],
+    match: 96,
+  },
+  {
+    id: 2,
+    name: "Zainab",
+    age: 25,
+    city: "Lagos",
+    distance: 7,
+    role: "Creative director",
+    bio: "Lagos energy, good food, and the kind of laughter that makes everyone at the table join in. Tell me your best spot.",
+    interests: ["Foodie", "Fashion", "Afrobeats", "Beach days"],
+    verified: true,
+    online: true,
+    images: [photo("photo-1529626455594-4ff0802cfb7e"), photo("photo-1494790108377-be9c29b29330"), photo("photo-1534528741775-53994a69daeb")],
+    match: 93,
+  },
+  {
+    id: 3,
+    name: "Aisha",
+    age: 29,
+    city: "Accra",
+    distance: 11,
+    role: "Architect",
+    bio: "Designing bright spaces and collecting tiny reasons to be grateful. I am always up for a gallery, a walk, or a new playlist.",
+    interests: ["Architecture", "Art", "Books", "Road trips"],
+    verified: true,
+    online: false,
+    images: [photo("photo-1488426862026-3ee34a7d66df"), photo("photo-1512316609839-7c4f2a28a7e5"), photo("photo-1517365830460-955ce3ccd263")],
+    match: 91,
+  },
+  {
+    id: 4,
+    name: "Fatima",
+    age: 26,
+    city: "Kigali",
+    distance: 9,
+    role: "Founder",
+    bio: "Kigali mornings, thoughtful conversations, and a soft spot for someone who is kind when nobody is watching.",
+    interests: ["Entrepreneurship", "Hiking", "Tea", "Wellness"],
+    verified: true,
+    online: true,
+    images: [photo("photo-1515886657613-9f3515b0c78f"), photo("photo-1508214751196-bcfd4ca60f91"), photo("photo-1524504388940-b1c1722653e1")],
+    match: 89,
+  },
+  {
+    id: 5,
+    name: "Nia",
+    age: 28,
+    city: "Dar es Salaam",
+    distance: 13,
+    role: "Marine biologist",
+    bio: "Ocean air, curious questions, and finding magic in the details. I will trade you a sunset walk for your favourite story.",
+    interests: ["Ocean life", "Cooking", "Photography", "Dancing"],
+    verified: false,
+    online: true,
+    images: [photo("photo-1531123897727-8f129e1688ce"), photo("photo-1506794778202-cad84cf45f1d"), photo("photo-1494790108377-be9c29b29330")],
+    match: 88,
+  },
+  {
+    id: 6,
+    name: "Keisha",
+    age: 30,
+    city: "Johannesburg",
+    distance: 18,
+    role: "DJ and producer",
+    bio: "If the beat is right, I am probably dancing. Looking for someone warm, honest, and ready for a spontaneous weekend away.",
+    interests: ["Music", "Vinyl", "Travel", "Street food"],
+    verified: true,
+    online: true,
+    images: [photo("photo-1494790108377-be9c29b29330"), photo("photo-1500648767791-00dcc994a43e"), photo("photo-1534528741775-53994a69daeb")],
+    match: 95,
+  },
+  {
+    id: 7,
+    name: "Iman",
+    age: 24,
+    city: "Mombasa",
+    distance: 21,
+    role: "Travel writer",
+    bio: "Salt in my hair, a notebook in my bag, and always one more place to explore. Say hi if you love stories with happy endings.",
+    interests: ["Writing", "Beach days", "Languages", "Film"],
+    verified: false,
+    online: true,
+    images: [photo("photo-1524504388940-b1c1722653e1"), photo("photo-1517841905240-472988babdf9"), photo("photo-1488426862026-3ee34a7d66df")],
+    match: 90,
+  },
+  {
+    id: 8,
+    name: "Chidera",
+    age: 27,
+    city: "Abuja",
+    distance: 26,
+    role: "UX researcher",
+    bio: "I ask too many questions in the best way. Give me a good playlist, a plate of jollof, and a reason to stay out a little longer.",
+    interests: ["Tech", "Jollof", "Podcasts", "Running"],
+    verified: true,
+    online: false,
+    images: [photo("photo-1506794778202-cad84cf45f1d"), photo("photo-1529626455594-4ff0802cfb7e"), photo("photo-1515886657613-9f3515b0c78f")],
+    match: 94,
+  },
+  {
+    id: 9,
+    name: "Liya",
+    age: 26,
+    city: "Addis Ababa",
+    distance: 31,
+    role: "Illustrator",
+    bio: "Colour, coffee, and conversations that wander somewhere beautiful. I believe the best dates include a little bit of curiosity.",
+    interests: ["Illustration", "Coffee", "Museums", "Dancing"],
+    verified: true,
+    online: true,
+    images: [photo("photo-1517841905240-472988babdf9"), photo("photo-1531123897727-8f129e1688ce"), photo("photo-1508214751196-bcfd4ca60f91")],
+    match: 87,
+  },
+  {
+    id: 10,
+    name: "Sasha",
+    age: 31,
+    city: "Kampala",
+    distance: 34,
+    role: "Community lead",
+    bio: "Big on kindness, long lunches, and making people feel at home. I am here for an easy laugh and something beautifully real.",
+    interests: ["Community", "Brunch", "Gardening", "Travel"],
+    verified: true,
+    online: false,
+    images: [photo("photo-1512316609839-7c4f2a28a7e5"), photo("photo-1494790108377-be9c29b29330"), photo("photo-1529626455594-4ff0802cfb7e")],
+    match: 92,
+  },
+];
+
+export const profileFallback = photo("photo-1494790108377-be9c29b29330");
