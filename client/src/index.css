@@ -46,7 +46,7 @@ button:not(:disabled):active { transform: scale(.97); }
 .nav-item svg { stroke-width: 2.15; }
 .nav-item:hover { color: var(--rose); background: #fff0f3; }
 .nav-item.active { color: white; background: linear-gradient(110deg, #ff4458, #ff6b8a); box-shadow: 0 11px 22px rgba(255, 68, 88, .18); }
-.nav-badge { margin-left: auto; border-radius: 20px; min-width: 23px; text-align: center; padding: 3px 6px; font-size: 10px; color: white; background: var(--rose); }
+.nav-badge { margin-left: auto; border-radius: 20px; min-width: 23px; text-align: center; padding: 3px 6px; font-size: 10px; color: white; background: var(--rose); } .nav-locked-badge { margin-left: auto; border-radius: 20px; padding: 4px 7px; color: white; background: #d9485f; font-size: 8px; font-weight: 900; letter-spacing: .06em; } .nav-item.active .nav-locked-badge { color: white; background: #d9485f; }
 .nav-item.active .nav-badge { color: var(--rose); background: white; }
 .coin-count { display: inline-flex; margin-left: auto; align-items: center; gap: 4px; color: #d48b00; font-size: 11px; font-weight: 700; }
 .sidebar-tip { display: flex; align-items: center; gap: 9px; padding: 11px 12px; margin-bottom: 18px; border: 1px solid rgba(255,179,192,.8); border-radius: 14px; color: var(--rose); background: rgba(255,255,255,.46); }
@@ -265,6 +265,16 @@ button:not(:disabled):active { transform: scale(.97); }
 @media (max-width: 720px) { .soyo-chat-layout { display: flex; height: calc(100vh - 220px); min-height: 600px; flex-direction: column; }.soyo-chat-list { height: 235px; flex: 0 0 235px; border-right: 0; border-bottom: 1px solid #f4dfe3; }.soyo-list-scroll { display: flex; overflow-x: auto; }.soyo-chat-preview { width: 240px; flex: 0 0 240px; }.soyo-list-tip { display: none; }.soyo-conversation { min-height: 0; flex: 1; }.soyo-conversation-head { padding: 0 14px; }.soyo-conversation-actions .icon-button:nth-child(2) { display: none; }.soyo-conversation-body { padding: 14px 12px 18px; }.message-content { max-width: 84%; }.soyo-composer-wrap { padding: 7px 10px 12px; } }
 @media (max-width: 480px) { .soyo-chat-layout { height: calc(100vh - 185px); min-height: 560px; }.soyo-chat-list { height: 205px; flex-basis: 205px; }.soyo-search { margin: 12px 12px 10px; }.soyo-list-heading { padding: 0 14px 8px; }.soyo-chat-preview { min-height: 70px; }.soyo-avatar { width: 48px; height: 48px; }.soyo-preview-copy strong { font-size: 14px; }.soyo-preview-copy p { font-size: 11px; }.soyo-tool { padding: 5px; font-size: 9px; }.soyo-tool svg { width: 14px; }.soyo-tools { gap: 0; } }
 
+
+/* Locked chats */
+.chat-lock-card { display: grid; place-items: center; min-height: min(540px, calc(100vh - 270px)); padding: clamp(34px, 7vw, 78px) 24px; border: 1px solid #f6d9df; border-radius: 24px; background: radial-gradient(circle at 16% 12%, rgba(255,179,192,.2), transparent 31%), radial-gradient(circle at 86% 84%, rgba(255,225,232,.78), transparent 38%), white; box-shadow: 0 20px 50px rgba(118,37,74,.08); text-align: center; }
+.chat-lock-icon { display: grid; place-items: center; width: 68px; height: 68px; margin-bottom: 20px; border: 1px solid #ffc2cd; border-radius: 21px; color: var(--rose); background: #fff0f3; box-shadow: 0 12px 25px rgba(255,68,88,.13); }
+.chat-lock-card h2 { margin: 0 0 10px; color: #4d2d40; font-family: 'Playfair Display', serif; font-size: clamp(28px, 4vw, 40px); letter-spacing: -.055em; }
+.chat-lock-message { max-width: 430px; margin: 0 0 22px; color: #9e7f8c; font-size: 14px; line-height: 1.55; }
+.chat-lock-balance { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 23px; padding: 10px 15px; border: 1px solid #f4d2da; border-radius: 999px; color: #9b7181; background: #fff7f8; font-size: 12px; font-weight: 700; }
+.chat-lock-balance svg { color: #d48b00; }.chat-lock-balance strong { color: var(--rose); font-family: 'Playfair Display', serif; font-size: 25px; line-height: 1; }.chat-lock-balance small { color: #b4939f; font-size: 10px; font-weight: 800; }
+.chat-lock-button { min-width: 215px; padding: 0 18px; }
+.mobile-nav-item { position: relative; }.mobile-nav-locked-badge { display: inline-flex; align-items: center; padding: 2px 4px; border-radius: 999px; color: white; background: #d9485f; font-size: 7px; font-weight: 900; letter-spacing: .04em; }
 
 /* Inline Paystack wallet refresh */
 .paystack-wallet-page .page-header { margin-bottom: 30px; }

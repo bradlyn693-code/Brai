@@ -112,14 +112,37 @@ function Register() {
 }
 
 const navItems = [{ href: "/dashboard", label: "Dashboard", icon: Sparkles }, { href: "/matches", label: "Matches", icon: Heart, badge: "10" }, { href: "/chats", label: "Chats", icon: MessageCircle, badge: "3" }, { href: "/wallet", label: "Wallet", icon: WalletCards }];
-function useCoins() {
-  const [coins, setCoins] = useState(readCoins);
-  useEffect(() => { const sync = () => setCoins(readCoins()); window.addEventListener("couplehearts:coins", sync); window.addEventListener("storage", sync); return () => { window.removeEventListener("couplehearts:coins", sync); window.removeEventListener("storage", sync); }; }, []);
-  return coins;
+function getUserCoins(user: User | null) {
+  const value = Number(user?.coins ?? 0);
+  return Number.isFinite(value) ? Math.max(0, value) : 0;
 }
+function hasChatAccess(user: User | null) { return user?.premium === true || getUserCoins(user) > 0; }
+function useCurrentUser() {
+  const [user, setUser] = useState<User | null>(() => getUser());
+  useEffect(() => {
+    const sync = () => setUser(getUser());
+    window.addEventListener("couplehearts:coins", sync);
+    window.addEventListener("storage", sync);
+    return () => { window.removeEventListener("couplehearts:coins", sync); window.removeEventListener("storage", sync); };
+  }, []);
+  return user;
+}
+function useCoins() { return getUserCoins(useCurrentUser()); }
 function Layout({ children }: { children: ReactNode }) {
-  const [location, navigate] = useLocation(); const [mobileOpen, setMobileOpen] = useState(false); const coins = useCoins(); const user = getUser() || defaultUser;
-  return <div className="app-shell"><aside className={`sidebar ${mobileOpen ? "sidebar-open" : ""}`}><div><div className="sidebar-top"><Logo compact /><button className="mobile-close" onClick={() => setMobileOpen(false)}><X size={18} /></button></div><p className="sidebar-kicker">YOUR LOVE STORY, ON YOUR TERMS</p><nav className="sidebar-nav">{navItems.map((item) => { const Icon = item.icon; return <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)} className={location.split("?")[0] === item.href ? "nav-item active" : "nav-item"}><Icon size={18} /><span>{item.label}</span>{item.badge && <span className="nav-badge">{item.badge}</span>}{item.href === "/wallet" && <span className="coin-count">{coins || 0}<CircleDollarSign size={13} /></span>}</Link>; })}</nav></div><div className="sidebar-bottom"><div className="sidebar-tip"><Sparkles size={15} /><span><strong>Profile boost</strong><small>Get seen by more lovely people.</small></span><ChevronRight size={14} /></div><div className="user-card"><div className="avatar avatar-small"><SafeImage src={africanProfiles[5].images[0]} alt="Your profile" /><span className="online-dot" /></div><div className="user-meta"><strong>{user.name}</strong><small>{coins || 0} coins · Online now</small></div><button className="icon-button"><Settings size={17} /></button></div><button className="sign-out" onClick={() => { localStorage.removeItem(userKey); navigate("/login"); }}><ArrowRight size={16} /> Sign out</button></div></aside>{mobileOpen && <button className="mobile-scrim" onClick={() => setMobileOpen(false)} aria-label="Close navigation" />}<main className="main-content"><header className="mobile-header"><button className="icon-button" onClick={() => setMobileOpen(true)}><Menu size={21} /></button><Logo compact /><button className="icon-button"><Bell size={19} /></button></header>{children}</main><nav className="mobile-nav">{navItems.map((item) => { const Icon = item.icon; return <Link key={item.href} href={item.href} className={location.split("?")[0] === item.href ? "mobile-nav-item active" : "mobile-nav-item"}><Icon size={19} /><span>{item.label}</span></Link>; })}</nav></div>;
+  const [location, navigate] = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const currentUser = useCurrentUser();
+  const user = currentUser || defaultUser;
+  const coins = getUserCoins(user);
+  const chatLocked = !hasChatAccess(user);
+  const handleNavClick = (event: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    setMobileOpen(false);
+    if (href === "/chats" && chatLocked) {
+      event.preventDefault();
+      if (window.confirm("Buy coins to chat?")) navigate("/wallet");
+    }
+  };
+  return <div className="app-shell"><aside className={`sidebar ${mobileOpen ? "sidebar-open" : ""}`}><div><div className="sidebar-top"><Logo compact /><button className="mobile-close" onClick={() => setMobileOpen(false)}><X size={18} /></button></div><p className="sidebar-kicker">YOUR LOVE STORY, ON YOUR TERMS</p><nav className="sidebar-nav">{navItems.map((item) => { const Icon = item.icon; const locked = item.href === "/chats" && chatLocked; return <Link key={item.href} href={item.href} onClick={(event) => handleNavClick(event, item.href)} className={location.split("?")[0] === item.href ? "nav-item active" : "nav-item"}><Icon size={18} /><span>{item.label}</span>{locked ? <span className="nav-locked-badge">LOCKED</span> : item.badge && <span className="nav-badge">{item.badge}</span>}{item.href === "/wallet" && <span className="coin-count">{coins}<CircleDollarSign size={13} /></span>}</Link>; })}</nav></div><div className="sidebar-bottom"><div className="sidebar-tip"><Sparkles size={15} /><span><strong>Profile boost</strong><small>Get seen by more lovely people.</small></span><ChevronRight size={14} /></div><div className="user-card"><div className="avatar avatar-small"><SafeImage src={africanProfiles[5].images[0]} alt="Your profile" /><span className="online-dot" /></div><div className="user-meta"><strong>{user.name}</strong><small>{coins} coins · Online now</small></div><button className="icon-button"><Settings size={17} /></button></div><button className="sign-out" onClick={() => { localStorage.removeItem(userKey); navigate("/login"); }}><ArrowRight size={16} /> Sign out</button></div></aside>{mobileOpen && <button className="mobile-scrim" onClick={() => setMobileOpen(false)} aria-label="Close navigation" />}<main className="main-content"><header className="mobile-header"><button className="icon-button" onClick={() => setMobileOpen(true)}><Menu size={21} /></button><Logo compact /><button className="icon-button"><Bell size={19} /></button></header>{children}</main><nav className="mobile-nav">{navItems.map((item) => { const Icon = item.icon; const locked = item.href === "/chats" && chatLocked; return <Link key={item.href} href={item.href} onClick={(event) => handleNavClick(event, item.href)} className={location.split("?")[0] === item.href ? "mobile-nav-item active" : "mobile-nav-item"}><Icon size={19} /><span>{item.label}</span>{locked && <span className="mobile-nav-locked-badge">LOCKED</span>}</Link>; })}</nav></div>;
 }
 function PageHeader({ eyebrow, title, description, action }: { eyebrow: string; title: string; description: string; action?: ReactNode }) { return <div className="page-header"><div><p className="eyebrow">{eyebrow}</p><h1>{title}</h1><p className="page-description">{description}</p></div>{action}</div>; }
 function LowCoinsModal({ needed, onClose }: { needed: number; onClose: () => void }) { const coins = useCoins(); return <div className="modal-backdrop" onClick={onClose}><motion.div className="utility-modal low-coins-modal" initial={{ opacity: 0, scale: .95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} onClick={(event) => event.stopPropagation()}><button className="modal-close" onClick={onClose}><X size={18} /></button><div className="utility-icon gold"><CircleDollarSign size={25} /></div><p className="eyebrow">Your sparkle needs a top-up</p><h2>Need coins! Go to Wallet</h2><p>You need {needed} coins, but your balance is {coins || 0}. Buy a little magic to keep connecting.</p><Link href="/wallet" className="primary-button" onClick={onClose}>Go to Wallet <WalletCards size={17} /></Link><button className="text-link keep-swiping" onClick={onClose}>Maybe later</button></motion.div></div>; }
@@ -173,6 +196,14 @@ function ChatBubble({ item, active }: { item: ChatMessage; active: Profile }) {
   return <div className="message-content">{item.image && <SafeImage className="sent-image" src={item.image} alt="Shared" />}{item.gift ? <div className="gift-bubble"><Gift size={18} /><strong>{item.gift}</strong><span>{item.text}</span></div> : item.voice ? <div className="voice-note"><button type="button" aria-label="Play voice note">▶</button><span>🎤 0:12</span><i><b /></i></div> : item.text && <div className="bubble"><p>{item.text}</p><time>{new Date(item.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time></div>}<small className="message-meta">{timeLabel(item.at)} {item.sender === "me" && <CheckCheck className="read-receipt" size={13} />}</small>{item.sender === "them" && !item.image && !item.text && <span className="sr-only">{active.name}</span>}</div>;
 }
 function Chats() {
+  const user = useCurrentUser();
+  const coins = getUserCoins(user);
+  if (!hasChatAccess(user)) {
+    return <div className="page chats-page"><PageHeader eyebrow="Keep the spark going" title="🔒 Chats Locked! You need coins to chat 😍 Buy coins to unlock 💖" description="Your conversations are waiting for a little more magic." /><section className="chat-lock-card" aria-labelledby="chat-lock-title"><div className="chat-lock-icon" aria-hidden="true"><Lock size={28} /></div><p className="eyebrow">A little more magic</p><h2 id="chat-lock-title">Unlock your conversations 💌</h2><p className="chat-lock-message">You need coins to chat 😍 Buy coins to unlock 💖</p><div className="chat-lock-balance"><CircleDollarSign size={18} /><span>Current balance</span><strong>{coins}</strong><small>coins</small></div><Link href="/wallet" className="primary-button chat-lock-button"><WalletCards size={17} /> Buy coins to unlock</Link></section></div>;
+  }
+  return <ChatsInterface />;
+}
+function ChatsInterface() {
   const [location, navigate] = useLocation(); const [records, setRecords] = useState<ChatRecord[]>(loadChats); const [selectedId, setSelectedId] = useState(0); const [query, setQuery] = useState(""); const [message, setMessage] = useState(""); const [typing, setTyping] = useState(false); const [giftOpen, setGiftOpen] = useState(false); const [imageOpen, setImageOpen] = useState(false); const [emojiOpen, setEmojiOpen] = useState(false); const [lowCoins, setLowCoins] = useState(0); const bodyRef = useRef<HTMLDivElement>(null); const timers = useRef<number[]>([]);
   const queryUser = Number(new URLSearchParams(location.split("?")[1] || "").get("user") || 0);
   useEffect(() => { const requested = queryUser && records.some((record) => record.userId === queryUser) ? queryUser : records[0]?.userId || africanProfiles[0].id; setSelectedId(requested); }, [queryUser, records.length]);
