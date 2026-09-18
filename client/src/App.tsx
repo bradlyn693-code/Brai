@@ -91,7 +91,7 @@ function profileById(id: number) { return africanProfiles.find((profile) => prof
 function seededMatches(): MatchRecord[] { return africanProfiles.slice(0, 5).map((profile, index) => ({ ...profile, matchedAt: Date.now() - index * 3600000, isNew: index < 2 })); }
 function loadMatches() {
   const stored = readJson<MatchRecord[]>(matchKey, []);
-  if (stored.length) return stored.map((item) => ({ ...profileById(item.id), ...item }));
+  if (stored.length) return stored.map((item) => ({ ...profileById(item.id), matchedAt: item.matchedAt, isNew: item.isNew }));
   const initial = seededMatches(); saveMatches(initial); return initial;
 }
 function matchPercent(profile: Profile, mine = ["Coffee", "Travel", "Design", "Film"]) {
