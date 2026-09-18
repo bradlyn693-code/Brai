@@ -14,7 +14,7 @@ type Profile = AfricanProfile;
 type MatchRecord = Profile & { matchedAt: number; isNew?: boolean };
 type ChatMessage = { id: string; sender: "me" | "them"; text?: string; image?: string; gift?: string; voice?: boolean; followUp?: boolean; at: number; read?: boolean };
 type ChatRecord = { userId: number; messages: ChatMessage[]; lastAt: number };
-type User = { email: string; name: string; coins?: number; premium?: boolean; premiumSince?: number };
+type User = { email: string; name: string; coins?: number; premium?: boolean; premiumSince?: number; coinsPurchasedAt?: number };
 
 type PaystackPackage = { id: string; name: string; coins: number; amount: number; price: number; icon: string; description: string; features: string[]; popular?: boolean; badge?: string; isPremium?: boolean };
 type PaystackCheckout = { openIframe: () => void };
@@ -60,7 +60,17 @@ function readJson<T>(key: string, fallback: T): T {
     return fallback;
   }
 }
-function getUser(): User | null { return readJson<User | null>(userKey, null); }
+function getUser(): User | null {
+  const user = readJson<User | null>(userKey, null);
+  if (!user) return null;
+  // Clear the old demo balance from earlier previews. Paid balances are marked by the Paystack callback.
+  if (!user.premium && Number(user.coins ?? 0) > 0 && !user.coinsPurchasedAt) {
+    const migrated = { ...user, coins: 0 };
+    localStorage.setItem(userKey, JSON.stringify(migrated));
+    return migrated;
+  }
+  return user;
+}
 function readCoins() { const value = Number(getUser()?.coins ?? 0); return Number.isFinite(value) ? Math.max(0, value) : 0; }
 function persistUser(user: User) {
   localStorage.setItem(userKey, JSON.stringify(user));
@@ -273,8 +283,8 @@ function Wallet() {
         callback: () => {
           const current = getUser() || { ...defaultUser, ...user };
           const next: User = pkg.isPremium
-            ? { ...current, coins: 99999, premium: true, premiumSince: Date.now() }
-            : { ...current, coins: Math.max(0, Number(current.coins ?? 0)) + pkg.coins, premium: Boolean(current.premium) };
+            ? { ...current, coins: 99999, premium: true, premiumSince: Date.now(), coinsPurchasedAt: Date.now() }
+            : { ...current, coins: Math.max(0, Number(current.coins ?? 0)) + pkg.coins, premium: Boolean(current.premium), coinsPurchasedAt: Date.now() };
           persistUser(next);
           setUser(next);
           setSuccessPackage(pkg);
