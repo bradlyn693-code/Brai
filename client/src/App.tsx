@@ -255,7 +255,7 @@ function ChatsInterface() {
 
 function Wallet() {
   const [user, setUser] = useState<User>(() => ({ ...defaultUser, ...(getUser() || {}) }));
-  const [paystackStatus, setPaystackStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [paystackStatus, setPaystackStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [notice, setNotice] = useState("");
   const [checkoutError, setCheckoutError] = useState("");
   const [successPackage, setSuccessPackage] = useState<PaystackPackage | null>(null);
@@ -271,17 +271,16 @@ function Wallet() {
     const syncUser = () => { if (active) setUser({ ...defaultUser, ...(getUser() || {}) }); };
     window.addEventListener("storage", syncUser);
     window.addEventListener("couplehearts:coins", syncUser);
-    ensurePaystackScript().then(() => { if (active) setPaystackStatus("ready"); }).catch(() => { if (active) { setPaystackStatus("error"); setNotice("Secure checkout is unavailable. Please try again or use the fallback link."); } });
     return () => { active = false; window.removeEventListener("storage", syncUser); window.removeEventListener("couplehearts:coins", syncUser); };
   }, []);
 
   const showError = (message: string) => { setCheckoutError(message); setNotice(""); };
-  const buy = (pkg: PaystackPackage) => {
-    if (paystackStatus !== "ready" || !window.PaystackPop) {
-      showError("Paystack is still loading or unavailable. Please try again, or use the secure fallback link below.");
-      return;
-    }
+  const buy = async (pkg: PaystackPackage) => {
     try {
+      setPaystackStatus("loading");
+      if (!window.PaystackPop) await ensurePaystackScript();
+      if (!window.PaystackPop) throw new Error("Paystack checkout is unavailable.");
+      setPaystackStatus("ready");
       window.PaystackPop.setup({
         key: "pk_live_746fa4cd031258a58692b35c6f73e79ca330c873",
         email: user.email || "",
