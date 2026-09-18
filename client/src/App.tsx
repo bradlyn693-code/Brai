@@ -123,7 +123,31 @@ function Login() {
     window.dispatchEvent(new CustomEvent("couplehearts:coins", { detail: nextUser.coins ?? 0 }));
     navigate("/dashboard");
   };
-  return <AuthShell eyebrow="Welcome back" title="Welcome back 🥰" subtitle="Your next great conversation might be one sign-in away." sideTitle="Find your couple."><form className="auth-form" onSubmit={submit} noValidate><label>Email address<input value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }} type="email" placeholder="you@example.com" autoComplete="email" required /></label><label>Password<div className="input-with-action"><input value={password} onChange={(e) => { setPassword(e.target.value); setError(""); }} type={showPassword ? "text" : "password"} placeholder="••••••••" autoComplete="current-password" minLength={6} required /><button type="button" className="input-action" onClick={() => setShowPassword(!showPassword)} aria-label="Toggle password visibility">{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div></label><div className="form-row"><label className="checkbox-label"><input type="checkbox" defaultChecked /><span>Remember me</span></label></div>{error && <p className="form-error" role="alert">{error}</p>}<button className="primary-button" type="submit">Sign in <Heart size={17} fill="currentColor" /></button><p className="auth-switch">No account yet? <Link href="/register">Join Couple Hearts <span>💑</span></Link></p></form></AuthShell>;
+  return <div className="lovely-login">
+    <section className="lovely-login-hero">
+      <div className="lovely-login-hero-image" />
+      <div className="lovely-login-hero-gradient" />
+      <div className="lovely-login-logo"><span>♡</span> Couple Hearts</div>
+      <p className="lovely-login-quote">Find your forever, together.</p>
+    </section>
+    <section className="lovely-login-main">
+      <div className="floating-hearts" aria-hidden="true"><span>💖</span><span>💗</span><span>💞</span><span>💕</span><span>💘</span></div>
+      <div className="lovely-login-card">
+        <div className="lovely-mobile-logo"><span>♡</span> Couple Hearts</div>
+        <div className="lovely-login-heading"><h1>Welcome back</h1><p>Log in to continue to Couple Hearts</p></div>
+        <form className="lovely-login-form" onSubmit={submit} noValidate>
+          <label>Email or phone<input value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }} type="email" placeholder="you@email.com" autoComplete="email" required /></label>
+          <label>Password<div className="lovely-password"><input value={password} onChange={(e) => { setPassword(e.target.value); setError(""); }} type={showPassword ? "text" : "password"} placeholder="••••••••" autoComplete="current-password" minLength={6} required /><button type="button" onClick={() => setShowPassword(!showPassword)} aria-label="Toggle password visibility">{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div></label>
+          <div className="lovely-login-options"><label><input type="checkbox" defaultChecked /> <span>Remember me</span></label><a href="#forgot">Forgot password?</a></div>
+          {error && <p className="form-error" role="alert">{error}</p>}
+          <button className="lovely-login-button" type="submit">Log In <Heart size={17} fill="currentColor" /></button>
+          <div className="lovely-divider"><span>or continue with</span></div>
+          <div className="lovely-social-row"><button type="button" className="lovely-social"><span className="apple-mark">●</span> Apple</button><button type="button" className="lovely-social"><span className="google-g">G</span> Google</button></div>
+          <p className="lovely-signup">Don&apos;t have an account? <Link href="/register">Sign Up</Link></p>
+        </form>
+      </div>
+    </section>
+  </div>;
 }
 function Register() {
   const [, navigate] = useLocation(); const [form, setForm] = useState({ name: "", email: "", age: "", gender: "", password: "", confirm: "" }); const [agreed, setAgreed] = useState(false); const [error, setError] = useState(""); const update = (key: string, value: string) => setForm((current) => ({ ...current, [key]: value }));
