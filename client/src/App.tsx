@@ -15,6 +15,7 @@ type MatchRecord = Profile & { matchedAt: number; isNew?: boolean };
 type ChatMessage = { id: string; sender: "me" | "them"; text?: string; image?: string; gift?: string; voice?: boolean; followUp?: boolean; at: number; read?: boolean };
 type ChatRecord = { userId: number; messages: ChatMessage[]; lastAt: number };
 type User = { email: string; name: string; coins?: number; premium?: boolean; premiumSince?: number; coinsPurchasedAt?: number };
+type LocalAccount = User & { password: string };
 
 type PaystackPackage = { id: string; name: string; coins: number; amount: number; price: number; icon: string; description: string; features: string[]; popular?: boolean; badge?: string; isPremium?: boolean };
 type PaystackCheckout = { openIframe: () => void };
@@ -26,6 +27,7 @@ declare global {
 }
 
 const userKey = "couplehearts_user";
+const allUsersKey = "couplehearts_all_users";
 const matchKey = "couplehearts_matches";
 const chatKey = "couplehearts_chats";
 const defaultUser: User = { email: "", name: "", coins: 0, premium: false };
@@ -60,11 +62,18 @@ function readJson<T>(key: string, fallback: T): T {
     return fallback;
   }
 }
+function getAllUsers(): LocalAccount[] { return readJson<LocalAccount[]>(allUsersKey, []); }
+function saveAllUsers(users: LocalAccount[]) { localStorage.setItem(allUsersKey, JSON.stringify(users)); }
+function ensureSeedAccount() {
+  const users = getAllUsers();
+  if (users.some((user) => user.email.toLowerCase() === "bradln021@gmail.com")) return;
+  saveAllUsers([...users, { email: "bradln021@gmail.com", password: "Password123!", name: "Bradlyn", coins: 20, premium: false }]);
+}
 function getUser(): User | null {
   const user = readJson<User | null>(userKey, null);
   if (!user) return null;
   // Clear the old demo balance from earlier previews. Paid balances are marked by the Paystack callback.
-  if (!user.premium && Number(user.coins ?? 0) > 0 && !user.coinsPurchasedAt) {
+  if (!user.premium && Number(user.coins ?? 0) > 0 && !user.coinsPurchasedAt && !("password" in user)) {
     const migrated = { ...user, coins: 0 };
     localStorage.setItem(userKey, JSON.stringify(migrated));
     return migrated;
@@ -112,14 +121,18 @@ function AuthShell({ children, eyebrow, title, subtitle, sideTitle }: { children
 }
 function Login() {
   const [, navigate] = useLocation(); const savedEmail = localStorage.getItem("couplehearts_saved_email"); const [email, setEmail] = useState(savedEmail || ""); const [password, setPassword] = useState(""); const [remember, setRemember] = useState(!!savedEmail); const [showPassword, setShowPassword] = useState(false); const [error, setError] = useState("");
+  useEffect(() => { ensureSeedAccount(); }, []);
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     const normalizedEmail = email.trim().toLowerCase();
     if (!normalizedEmail || !normalizedEmail.includes("@")) { setError("Enter a valid email address."); return; }
     if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
-    const existing = getUser();
-    if (!existing || existing.email?.toLowerCase() !== normalizedEmail) { setError("No account found for this email. Please create a new account."); return; }
-    const nextUser = { ...existing, email: normalizedEmail };
+    ensureSeedAccount();
+    const users = getAllUsers();
+    const found = users.find((user) => user.email.toLowerCase() === normalizedEmail);
+    if (!found) { setError("No account found for this email. Please create a new account."); return; }
+    if (found.password !== password) { setError("Wrong password. Please try again."); return; }
+    const nextUser = { ...found };
     if (remember) localStorage.setItem("couplehearts_saved_email", normalizedEmail);
     else localStorage.removeItem("couplehearts_saved_email");
     localStorage.setItem(userKey, JSON.stringify(nextUser));
@@ -152,7 +165,8 @@ function Login() {
 }
 function Register() {
   const [, navigate] = useLocation(); const [form, setForm] = useState({ name: "", email: "", age: "", gender: "", password: "", confirm: "" }); const [agreed, setAgreed] = useState(false); const [error, setError] = useState(""); const update = (key: string, value: string) => setForm((current) => ({ ...current, [key]: value }));
-  const submit = (event: React.FormEvent) => { event.preventDefault(); if (!form.name || !form.email || !form.age || !form.gender || form.password.length < 6 || form.password !== form.confirm || !agreed) { setError("Complete the fields, match your passwords, and agree to the terms."); return; } localStorage.setItem(userKey, JSON.stringify({ email: form.email, name: form.name, coins: 0 })); navigate("/dashboard"); };
+  useEffect(() => { ensureSeedAccount(); }, []);
+  const submit = (event: React.FormEvent) => { event.preventDefault(); const normalizedEmail = form.email.trim().toLowerCase(); if (!form.name || !normalizedEmail || !form.age || !form.gender || form.password.length < 6 || form.password !== form.confirm || !agreed) { setError("Complete the fields, match your passwords, and agree to the terms."); return; } const users = getAllUsers(); if (users.some((user) => user.email.toLowerCase() === normalizedEmail)) { setError("An account with this email already exists. Please log in."); return; } const account: LocalAccount = { email: normalizedEmail, password: form.password, name: form.name.trim(), coins: 20, premium: false }; saveAllUsers([...users, account]); localStorage.setItem(userKey, JSON.stringify(account)); navigate("/dashboard"); };
   return <AuthShell eyebrow="Start something real" title="Create your account 🚀" subtitle="A few details, then the fun part: meeting someone lovely." sideTitle="Meet with intention."><form className="auth-form register-form" onSubmit={submit}><div className="register-grid"><label>Full name<input value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="Alex Morgan" /></label><label>Email<input value={form.email} onChange={(e) => update("email", e.target.value)} type="email" placeholder="you@example.com" /></label><label>Age<select value={form.age} onChange={(e) => update("age", e.target.value)}><option value="">Select age</option>{Array.from({ length: 43 }, (_, i) => <option key={i + 18}>{i + 18}</option>)}</select></label><label>Gender<select value={form.gender} onChange={(e) => update("gender", e.target.value)}><option value="">Choose one</option><option>Female</option><option>Male</option><option>Other</option></select></label></div><label>Password<input value={form.password} onChange={(e) => update("password", e.target.value)} type="password" placeholder="6+ characters" /></label><label>Confirm password<input value={form.confirm} onChange={(e) => update("confirm", e.target.value)} type="password" placeholder="Repeat your password" /></label><button type="button" className="upload-zone"><span className="upload-icon"><ImagePlus size={20} /></span><span><strong>Add a profile photo</strong><small>Add 2+ photos = 3x more matches 📸</small></span><ChevronRight size={17} /></button><label className="checkbox-label terms"><input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} /><span>I agree to the Couple Hearts Terms 💑</span></label>{error && <p className="form-error">{error}</p>}<button className="primary-button" type="submit">Create Couple Account <ArrowRight size={17} /></button><p className="auth-switch">Already have an account? <Link href="/login">Sign in</Link></p></form></AuthShell>;
 }
 
