@@ -263,7 +263,7 @@ function Wallet() {
   const packages: PaystackPackage[] = [
     { id: "100coins", name: "Starter Spark", coins: 100, amount: 117000, price: 9, icon: "🎯", description: "Perfect to start! 💌 10 chats, 5 Super Likes ⭐, 2 gifts 🎁. Real African beauties near you!", features: ["10 Chats", "5 Super Likes", "2 Gifts"] },
     { id: "500coins", name: "Popular Love", coins: 500, amount: 169000, price: 13, icon: "❤️", badge: "MOST POPULAR", popular: true, description: "Bestseller! 🔥 Unlimited chats 7 days, 25 Super Likes, 10 gifts, 3 Boosts ⚡. 3x more matches!", features: ["Unlimited Chats · 7 days", "25 Super Likes", "10 Gifts", "3 Boosts"] },
-    { id: "unlimited", name: "VIP Unlimited", coins: 99999, amount: 364000, price: 28, icon: "👑", badge: "UNLIMITED", isPremium: true, description: "VIP Couple! 💑❤️ Unlimited chats, likes, gifts, see who liked you 😍, Verified ✅", features: ["Unlimited Chats", "Super Likes & Boosts", "See Who Liked You", "VIP Verified Badge", "Priority Support"] },
+    { id: "unlimited", name: "VIP Unlimited", coins: 99999, amount: 400000, price: 30.77, icon: "👑", badge: "UNLIMITED", isPremium: true, description: "VIP Couple! 💑❤️ Unlimited chats, likes, gifts, see who liked you 😍, Verified ✅", features: ["Unlimited Chats", "Super Likes & Boosts", "See Who Liked You", "VIP Verified Badge", "Priority Support"] },
   ];
 
   useEffect(() => {
