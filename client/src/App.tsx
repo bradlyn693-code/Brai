@@ -16,7 +16,7 @@ type ChatMessage = { id: string; sender: "me" | "them"; text?: string; image?: s
 type ChatRecord = { userId: number; messages: ChatMessage[]; lastAt: number };
 type User = { email: string; name: string; coins?: number; premium?: boolean; premiumSince?: number };
 
-type PaystackPackage = { id: string; name: string; coins: number; price: number; icon: string; description: string; features: string[]; popular?: boolean; badge?: string; isPremium?: boolean };
+type PaystackPackage = { id: string; name: string; coins: number; amount: number; price: number; icon: string; description: string; features: string[]; popular?: boolean; badge?: string; isPremium?: boolean };
 type PaystackCheckout = { openIframe: () => void };
 type PaystackSetupOptions = { key: string; email: string; amount: number; currency: string; ref: string; metadata: { coins: number; package: string }; onClose: () => void; callback: (response: { reference?: string }) => void };
 type PaystackApi = { setup: (options: PaystackSetupOptions) => PaystackCheckout };
@@ -210,9 +210,9 @@ function Wallet() {
   const [successPackage, setSuccessPackage] = useState<PaystackPackage | null>(null);
   const coins = Math.max(0, Number(user.coins ?? 0));
   const packages: PaystackPackage[] = [
-    { id: "starter-spark", name: "Starter Spark", coins: 100, price: 9, icon: "🎯", description: "A sweet little start for meaningful moments.", features: ["10 Chats", "5 Super Likes", "2 Gifts"] },
-    { id: "popular-love", name: "Popular Love", coins: 500, price: 13, icon: "❤️", badge: "MOST POPULAR", popular: true, description: "The crowd-favorite boost for your love story.", features: ["Unlimited Chats · 7 days", "25 Super Likes", "10 Gifts", "3 Boosts"] },
-    { id: "vip-unlimited", name: "VIP Unlimited", coins: 99999, price: 28, icon: "👑", badge: "UNLIMITED ACCESS", isPremium: true, description: "Go all in with the complete Couple Hearts experience.", features: ["Unlimited Chats", "Super Likes & Boosts", "See Who Liked You", "VIP Verified Badge", "Priority Support"] },
+    { id: "100coins", name: "Starter Spark", coins: 100, amount: 117000, price: 9, icon: "🎯", description: "Perfect to start! 💌 10 chats, 5 Super Likes ⭐, 2 gifts 🎁. Real African beauties near you!", features: ["10 Chats", "5 Super Likes", "2 Gifts"] },
+    { id: "500coins", name: "Popular Love", coins: 500, amount: 169000, price: 13, icon: "❤️", badge: "MOST POPULAR", popular: true, description: "Bestseller! 🔥 Unlimited chats 7 days, 25 Super Likes, 10 gifts, 3 Boosts ⚡. 3x more matches!", features: ["Unlimited Chats · 7 days", "25 Super Likes", "10 Gifts", "3 Boosts"] },
+    { id: "unlimited", name: "VIP Unlimited", coins: 99999, amount: 364000, price: 28, icon: "👑", badge: "UNLIMITED", isPremium: true, description: "VIP Couple! 💑❤️ Unlimited chats, likes, gifts, see who liked you 😍, Verified ✅", features: ["Unlimited Chats", "Super Likes & Boosts", "See Who Liked You", "VIP Verified Badge", "Priority Support"] },
   ];
 
   useEffect(() => {
@@ -233,9 +233,9 @@ function Wallet() {
     try {
       window.PaystackPop.setup({
         key: "pk_live_746fa4cd031258a58692b35c6f73e79ca330c873",
-        email: user.email || "user@couplehearts.com",
-        amount: pkg.price * 100,
-        currency: "USD",
+        email: user.email || "demo@couplehearts.com",
+        amount: pkg.amount,
+        currency: "KES",
         ref: `CH_${Date.now()}`,
         metadata: { coins: pkg.coins, package: pkg.id },
         onClose: () => setNotice("Checkout closed — your wallet is unchanged."),
@@ -271,9 +271,9 @@ function Wallet() {
         <div className="section-heading"><div><p className="eyebrow">Choose your energy</p><h2>Pick your perfect package</h2></div><span className={`secure-label paystack-status-${paystackStatus}`}><Lock size={13} /> {paystackStatus === "ready" ? "Secure checkout" : "Preparing checkout"}</span></div>
         <div className="paystack-packages">{packages.map((pkg) => <article key={pkg.id} className={`wallet-package-card ${pkg.popular ? "is-popular" : ""} ${pkg.isPremium ? "is-vip" : ""}`}>
           {pkg.badge && <span className="wallet-package-badge">{pkg.badge}</span>}
-          <div className="wallet-package-icon" aria-hidden="true">{pkg.icon}</div><h3>{pkg.name}</h3><div className="wallet-package-price"><strong>{pkg.price}</strong><span>USD</span></div><p>{pkg.description}</p><div className="wallet-package-coins"><CircleDollarSign size={16} /> {pkg.isPremium ? "Unlimited coins" : `${pkg.coins.toLocaleString()} coins`}</div><ul>{pkg.features.map((feature) => <li key={feature}><Check size={15} /> <span>{feature}</span></li>)}</ul><button className="wallet-buy-button" type="button" onClick={() => buy(pkg)}>{pkg.isPremium ? "Unlock VIP access" : `Buy ${pkg.name}`} <ArrowRight size={16} /></button>
+          <div className="wallet-package-icon" aria-hidden="true">{pkg.icon}</div><h3>{pkg.name}</h3><div className="wallet-package-price"><strong>KSH {Math.round(pkg.amount / 100).toLocaleString()}</strong><span>${pkg.price}</span></div><p>{pkg.description}</p><div className="wallet-package-coins"><CircleDollarSign size={16} /> {pkg.isPremium ? "Unlimited coins" : `${pkg.coins.toLocaleString()} coins`}</div><ul>{pkg.features.map((feature) => <li key={feature}><Check size={15} /> <span>{feature}</span></li>)}</ul><button className="wallet-buy-button" type="button" onClick={() => buy(pkg)}>{pkg.isPremium ? `Unlock VIP access · KSH ${Math.round(pkg.amount / 100).toLocaleString()}` : `Buy ${pkg.name} · KSH ${Math.round(pkg.amount / 100).toLocaleString()}`} <ArrowRight size={16} /></button>
         </article>)}</div>
-        <p className="paystack-note">💡 No redirect - Secure Paystack popup. M-Pesa &amp; Cards accepted. Theme matches Couple Hearts❤️</p>
+        <p className="paystack-note">💡 No redirect — secure KSH checkout via Paystack. M-Pesa &amp; Cards accepted. Theme matches Couple Hearts❤️</p>
         <a className={`paystack-fallback-link ${checkoutError ? "visible" : ""}`} href="https://paystack.shop/pay/o2dkau16m7" target="_blank" rel="noreferrer">Use secure fallback checkout</a>
       </section>
 
