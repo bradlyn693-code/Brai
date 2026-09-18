@@ -14,12 +14,43 @@ type Profile = AfricanProfile;
 type MatchRecord = Profile & { matchedAt: number; isNew?: boolean };
 type ChatMessage = { id: string; sender: "me" | "them"; text?: string; image?: string; gift?: string; voice?: boolean; followUp?: boolean; at: number; read?: boolean };
 type ChatRecord = { userId: number; messages: ChatMessage[]; lastAt: number };
-type User = { email: string; name: string; coins?: number };
+type User = { email: string; name: string; coins?: number; premium?: boolean; premiumSince?: number };
+
+type PaystackPackage = { id: string; name: string; coins: number; price: number; icon: string; description: string; features: string[]; popular?: boolean; badge?: string; isPremium?: boolean };
+type PaystackCheckout = { openIframe: () => void };
+type PaystackSetupOptions = { key: string; email: string; amount: number; currency: string; ref: string; metadata: { coins: number; package: string }; onClose: () => void; callback: (response: { reference?: string }) => void };
+type PaystackApi = { setup: (options: PaystackSetupOptions) => PaystackCheckout };
+
+declare global {
+  interface Window { PaystackPop?: PaystackApi }
+}
 
 const userKey = "couplehearts_user";
 const matchKey = "couplehearts_matches";
 const chatKey = "couplehearts_chats";
-const defaultUser: User = { email: "demo@couplehearts.com", name: "Alex", coins: 0 };
+const defaultUser: User = { email: "demo@couplehearts.com", name: "Alex", coins: 0, premium: false };
+const paystackScriptUrl = "https://js.paystack.co/v1/inline.js";
+let paystackScriptPromise: Promise<void> | null = null;
+
+function ensurePaystackScript() {
+  if (typeof window === "undefined" || typeof document === "undefined") return Promise.reject(new Error("Paystack is only available in a browser."));
+  if (window.PaystackPop) return Promise.resolve();
+  if (paystackScriptPromise) return paystackScriptPromise;
+  paystackScriptPromise = new Promise<void>((resolve, reject) => {
+    const existing = document.querySelector(`script[src="${paystackScriptUrl}"]`) as HTMLScriptElement | null;
+    const script = existing || document.createElement("script");
+    const finish = () => window.PaystackPop ? resolve() : reject(new Error("Paystack loaded without its checkout API."));
+    script.addEventListener("load", finish, { once: true });
+    script.addEventListener("error", () => reject(new Error("Paystack could not be loaded.")), { once: true });
+    if (!existing) {
+      script.src = paystackScriptUrl;
+      script.async = true;
+      script.dataset.coupleheartsPaystack = "true";
+      document.head.appendChild(script);
+    } else if (window.PaystackPop) finish();
+  });
+  return paystackScriptPromise;
+}
 
 function readJson<T>(key: string, fallback: T): T {
   try {
@@ -30,7 +61,12 @@ function readJson<T>(key: string, fallback: T): T {
   }
 }
 function getUser(): User | null { return readJson<User | null>(userKey, null); }
-function readCoins() { return Math.max(0, Number(getUser()?.coins ?? 0)); }
+function readCoins() { const value = Number(getUser()?.coins ?? 0); return Number.isFinite(value) ? Math.max(0, value) : 0; }
+function persistUser(user: User) {
+  localStorage.setItem(userKey, JSON.stringify(user));
+  window.dispatchEvent(new Event("storage"));
+  window.dispatchEvent(new CustomEvent("couplehearts:coins", { detail: user.coins ?? 0 }));
+}
 function updateCoins(delta: number) {
   const current = getUser() || defaultUser;
   const next = { ...current, coins: Math.max(0, Number(current.coins ?? 0) + delta) };
@@ -167,8 +203,87 @@ function Chats() {
 }
 
 function Wallet() {
-  const coins = useCoins(); const [notice, setNotice] = useState(""); const packages = [{ coins: 100, price: "$2", label: "A little boost" }, { coins: 500, price: "$8", label: "Most loved", popular: true }, { coins: 1200, price: "$15", label: "Best value" }]; const buy = (pack: typeof packages[number]) => { updateCoins(pack.coins); setNotice(`${pack.coins.toLocaleString()} coins added to your wallet.`); window.setTimeout(() => setNotice(""), 2600); };
-  return <div className="page wallet-page"><PageHeader eyebrow="A little extra magic" title="Your wallet 💰" description="More ways to make your intentions known." action={<div className="balance-chip"><CircleDollarSign size={16} /> {coins || 0} coins</div>} /><div className="wallet-grid"><section className={`balance-card ${coins === 0 ? "balance-zero" : ""}`}><div className="balance-glow" /><div className="balance-card-top"><span className="wallet-icon"><CircleDollarSign size={21} /></span><span className="balance-label">Current balance</span><button className="icon-button light"><MoreHorizontal size={18} /></button></div><div className="balance-number">{(coins || 0).toLocaleString()}</div><div className="balance-caption">{coins === 0 ? "0 Coins - Buy to chat & match 💔" : "COUPLE COINS · Ready to spend on connection"}</div><div className="balance-card-foot"><span><span className="live-dot" /> Your wallet is active</span><button className="light-text-button">Transaction history <ArrowRight size={14} /></button></div></section><section className="wallet-section"><div className="section-heading"><div><p className="eyebrow">Choose your energy</p><h2>Top up coins</h2></div><span className="secure-label"><Lock size={13} /> Secure checkout</span></div><div className="coin-packages">{packages.map((pack) => <button key={pack.coins} className={pack.popular ? "coin-package popular" : "coin-package"} onClick={() => buy(pack)}>{pack.popular && <span className="popular-label">Popular</span>}<span className="coin-symbol">◉</span><strong>{pack.coins.toLocaleString()}</strong><span>coins</span><b>{pack.price}</b><small>{pack.label}</small></button>)}</div></section><section className="wallet-section perks-section"><div className="section-heading"><div><p className="eyebrow">Spend them on</p><h2>Little gestures, big energy</h2></div></div><div className="perk-grid"><Perk icon={<Zap size={19} />} title="Boost" value="100 coins" description="Be seen by more compatible people." premium={false} /><Perk icon={<Star size={19} />} title="Super like" value="20 coins" description="Let someone know they really caught your eye." /><Perk icon={<Crown size={19} />} title="Premium" value="$6.99 / month" description="Unlimited likes, rewind, and no ads." premium /></div></section><section className="payment-card"><div className="payment-icon"><CreditCard size={20} /></div><div><p className="eyebrow">Simple & secure</p><h3>Pay the way that feels easy.</h3><p>Cards, Paystack, and M-Pesa are all welcome here.</p></div><button className="icon-button"><ChevronRight size={18} /></button></section></div>{notice && <motion.div className="toast" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}><Check size={16} /> {notice}</motion.div>}</div>;
+  const [user, setUser] = useState<User>(() => ({ ...defaultUser, ...(getUser() || {}) }));
+  const [paystackStatus, setPaystackStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [notice, setNotice] = useState("");
+  const [checkoutError, setCheckoutError] = useState("");
+  const [successPackage, setSuccessPackage] = useState<PaystackPackage | null>(null);
+  const coins = Math.max(0, Number(user.coins ?? 0));
+  const packages: PaystackPackage[] = [
+    { id: "starter-spark", name: "Starter Spark", coins: 100, price: 9, icon: "🎯", description: "A sweet little start for meaningful moments.", features: ["10 Chats", "5 Super Likes", "2 Gifts"] },
+    { id: "popular-love", name: "Popular Love", coins: 500, price: 13, icon: "❤️", badge: "MOST POPULAR", popular: true, description: "The crowd-favorite boost for your love story.", features: ["Unlimited Chats · 7 days", "25 Super Likes", "10 Gifts", "3 Boosts"] },
+    { id: "vip-unlimited", name: "VIP Unlimited", coins: 99999, price: 28, icon: "👑", badge: "UNLIMITED ACCESS", isPremium: true, description: "Go all in with the complete Couple Hearts experience.", features: ["Unlimited Chats", "Super Likes & Boosts", "See Who Liked You", "VIP Verified Badge", "Priority Support"] },
+  ];
+
+  useEffect(() => {
+    let active = true;
+    const syncUser = () => { if (active) setUser({ ...defaultUser, ...(getUser() || {}) }); };
+    window.addEventListener("storage", syncUser);
+    window.addEventListener("couplehearts:coins", syncUser);
+    ensurePaystackScript().then(() => { if (active) setPaystackStatus("ready"); }).catch(() => { if (active) { setPaystackStatus("error"); setNotice("Secure checkout is unavailable. Please try again or use the fallback link."); } });
+    return () => { active = false; window.removeEventListener("storage", syncUser); window.removeEventListener("couplehearts:coins", syncUser); };
+  }, []);
+
+  const showError = (message: string) => { setCheckoutError(message); setNotice(""); };
+  const buy = (pkg: PaystackPackage) => {
+    if (paystackStatus !== "ready" || !window.PaystackPop) {
+      showError("Paystack is still loading or unavailable. Please try again, or use the secure fallback link below.");
+      return;
+    }
+    try {
+      window.PaystackPop.setup({
+        key: "pk_live_746fa4cd031258a58692b35c6f73e79ca330c873",
+        email: user.email || "user@couplehearts.com",
+        amount: pkg.price * 100,
+        currency: "USD",
+        ref: `CH_${Date.now()}`,
+        metadata: { coins: pkg.coins, package: pkg.id },
+        onClose: () => setNotice("Checkout closed — your wallet is unchanged."),
+        callback: () => {
+          const current = getUser() || { ...defaultUser, ...user };
+          const next: User = pkg.isPremium
+            ? { ...current, coins: 99999, premium: true, premiumSince: Date.now() }
+            : { ...current, coins: Math.max(0, Number(current.coins ?? 0)) + pkg.coins, premium: Boolean(current.premium) };
+          persistUser(next);
+          setUser(next);
+          setSuccessPackage(pkg);
+          setNotice("");
+        },
+      }).openIframe();
+    } catch {
+      showError("We could not open Paystack right now. Please try again or use the secure fallback link below.");
+    }
+  };
+
+  return <div className="page wallet-page paystack-wallet-page">
+    <PageHeader eyebrow="A little extra magic" title="Your wallet 💰" description="More ways to make your intentions known." action={<div className="balance-chip"><CircleDollarSign size={16} /> {user.premium ? "VIP unlimited" : `${coins} coins`}</div>} />
+    <div className="wallet-grid paystack-wallet-grid">
+      <section className={`balance-card paystack-balance-card ${coins === 0 && !user.premium ? "balance-zero" : ""} ${user.premium ? "balance-premium" : ""}`}>
+        <div className="balance-glow" />
+        <div className="balance-card-top"><span className="wallet-icon"><CircleDollarSign size={21} /></span><span className="balance-label">Current balance</span>{user.premium && <span className="vip-wallet-badge"><Crown size={14} fill="currentColor" /> VIP</span>}<button className="icon-button light" aria-label="Wallet options"><MoreHorizontal size={18} /></button></div>
+        <div className="balance-number">{user.premium ? "∞" : coins.toLocaleString()}</div>
+        <div className="balance-caption">{user.premium ? "UNLIMITED ACCESS · VIP MEMBER" : coins === 0 ? "0 COINS · BUY A LITTLE MAGIC TO CONNECT 💔" : "COUPLE COINS · READY TO SPEND ON CONNECTION"}</div>
+        {coins === 0 && !user.premium && <div className="wallet-zero-warning"><CircleDollarSign size={14} /> Your wallet is empty — choose a spark below.</div>}
+        <div className="balance-card-foot"><span><span className="live-dot" /> {user.premium ? "VIP wallet active" : "Your wallet is active"}</span><span className="wallet-secure-foot"><Lock size={12} /> Secure Paystack checkout</span></div>
+      </section>
+
+      <section className="wallet-section paystack-packages-section">
+        <div className="section-heading"><div><p className="eyebrow">Choose your energy</p><h2>Pick your perfect package</h2></div><span className={`secure-label paystack-status-${paystackStatus}`}><Lock size={13} /> {paystackStatus === "ready" ? "Secure checkout" : "Preparing checkout"}</span></div>
+        <div className="paystack-packages">{packages.map((pkg) => <article key={pkg.id} className={`wallet-package-card ${pkg.popular ? "is-popular" : ""} ${pkg.isPremium ? "is-vip" : ""}`}>
+          {pkg.badge && <span className="wallet-package-badge">{pkg.badge}</span>}
+          <div className="wallet-package-icon" aria-hidden="true">{pkg.icon}</div><h3>{pkg.name}</h3><div className="wallet-package-price"><strong>{pkg.price}</strong><span>USD</span></div><p>{pkg.description}</p><div className="wallet-package-coins"><CircleDollarSign size={16} /> {pkg.isPremium ? "Unlimited coins" : `${pkg.coins.toLocaleString()} coins`}</div><ul>{pkg.features.map((feature) => <li key={feature}><Check size={15} /> <span>{feature}</span></li>)}</ul><button className="wallet-buy-button" type="button" onClick={() => buy(pkg)}>{pkg.isPremium ? "Unlock VIP access" : `Buy ${pkg.name}`} <ArrowRight size={16} /></button>
+        </article>)}</div>
+        <p className="paystack-note">💡 No redirect - Secure Paystack popup. M-Pesa &amp; Cards accepted. Theme matches Couple Hearts❤️</p>
+        <a className={`paystack-fallback-link ${checkoutError ? "visible" : ""}`} href="https://paystack.shop/pay/o2dkau16m7" target="_blank" rel="noreferrer">Use secure fallback checkout</a>
+      </section>
+
+      <section className="wallet-section perks-section"><div className="section-heading"><div><p className="eyebrow">Spend them on</p><h2>Little gestures, big energy</h2></div></div><div className="perk-grid"><Perk icon={<Zap size={19} />} title="Boost" value="100 coins" description="Be seen by more compatible people." premium={false} /><Perk icon={<Star size={19} />} title="Super like" value="20 coins" description="Let someone know they really caught your eye." /><Perk icon={<Crown size={19} />} title="Premium" value="$6.99 / month" description="Unlimited likes, rewind, and no ads." premium /></div></section>
+      <section className="payment-card"><div className="payment-icon"><CreditCard size={20} /></div><div><p className="eyebrow">Simple &amp; secure</p><h3>Pay the way that feels easy.</h3><p>Cards, Paystack, and M-Pesa are all welcome here.</p></div><ChevronRight size={18} /></section>
+    </div>
+    {notice && <motion.div className="toast wallet-toast" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}><Check size={16} /> {notice}</motion.div>}
+    {checkoutError && <div className="modal-backdrop" onClick={() => setCheckoutError("")}><motion.div className="utility-modal wallet-error-modal" initial={{ opacity: 0, scale: .95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} onClick={(event) => event.stopPropagation()}><button className="modal-close" onClick={() => setCheckoutError("")} aria-label="Close"><X size={18} /></button><div className="utility-icon gold"><CreditCard size={25} /></div><p className="eyebrow">One tiny hiccup</p><h2>Paystack needs another try</h2><p>{checkoutError}</p><a className="primary-button" href="https://paystack.shop/pay/o2dkau16m7" target="_blank" rel="noreferrer">Use fallback checkout <ArrowRight size={17} /></a><button className="text-link keep-swiping" onClick={() => setCheckoutError("")}>Try again</button></motion.div></div>}
+    {successPackage && <div className="modal-backdrop" onClick={() => setSuccessPackage(null)}><motion.div className="utility-modal wallet-success-modal" initial={{ opacity: 0, scale: .95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} onClick={(event) => event.stopPropagation()}><div className="confetti" aria-hidden="true">{Array.from({ length: 18 }, (_, index) => <i key={index} style={{ "--i": index } as React.CSSProperties} />)}</div><div className="utility-icon rose">{successPackage.isPremium ? <Crown size={25} fill="currentColor" /> : <Check size={25} />}</div><p className="eyebrow">Payment confirmed</p><h2>{successPackage.isPremium ? "Welcome to VIP Unlimited!" : "Your wallet just got brighter!"}</h2><p>{successPackage.isPremium ? "Your Couple Hearts account now has unlimited access and a VIP verified badge." : `${successPackage.coins.toLocaleString()} coins are ready for your next conversation.`}</p><button className="primary-button" onClick={() => setSuccessPackage(null)}>Keep connecting <Heart size={17} fill="currentColor" /></button></motion.div></div>}
+  </div>;
 }
 function Perk({ icon, title, value, description, premium = false }: { icon: ReactNode; title: string; value: string; description: string; premium?: boolean }) { return <article className="perk-card"><div className={premium ? "perk-icon premium-icon" : "perk-icon"}>{icon}</div><div><div className="perk-name"><h3>{title}</h3>{premium && <Crown size={14} fill="currentColor" />}</div><strong>{value}</strong><p>{description}</p></div><button className="round-arrow"><ArrowRight size={15} /></button></article>; }
 function Protected({ children }: { children: ReactNode }) { const [, navigate] = useLocation(); const user = getUser(); useEffect(() => { if (!user) navigate("/login"); }, [navigate, user]); return user ? <Layout>{children}</Layout> : null; }
