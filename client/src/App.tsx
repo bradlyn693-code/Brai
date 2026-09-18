@@ -118,7 +118,8 @@ function Login() {
     if (!normalizedEmail || !normalizedEmail.includes("@")) { setError("Enter a valid email address."); return; }
     if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
     const existing = getUser();
-    const nextUser = existing?.email === normalizedEmail ? { ...existing, email: normalizedEmail } : { email: normalizedEmail, name: normalizedEmail.split("@")[0] || normalizedEmail, coins: 0, premium: false };
+    if (!existing || existing.email?.toLowerCase() !== normalizedEmail) { setError("No account found for this email. Please create a new account."); return; }
+    const nextUser = { ...existing, email: normalizedEmail };
     localStorage.setItem(userKey, JSON.stringify(nextUser));
     window.dispatchEvent(new CustomEvent("couplehearts:coins", { detail: nextUser.coins ?? 0 }));
     navigate("/dashboard");
@@ -141,8 +142,6 @@ function Login() {
           <div className="lovely-login-options"><label><input type="checkbox" defaultChecked /> <span>Remember me</span></label><a href="#forgot">Forgot password?</a></div>
           {error && <p className="form-error" role="alert">{error}</p>}
           <button className="lovely-login-button" type="submit">Log In <Heart size={17} fill="currentColor" /></button>
-          <div className="lovely-divider"><span>or continue with</span></div>
-          <div className="lovely-social-row"><button type="button" className="lovely-social"><span className="apple-mark">●</span> Apple</button><button type="button" className="lovely-social"><span className="google-g">G</span> Google</button></div>
           <p className="lovely-signup">Don&apos;t have an account? <Link href="/register">Sign Up</Link></p>
         </form>
       </div>
