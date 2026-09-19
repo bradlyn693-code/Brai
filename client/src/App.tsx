@@ -30,6 +30,7 @@ const userKey = "couplehearts_user";
 const allUsersKey = "couplehearts_all_users";
 const matchKey = "couplehearts_matches";
 const chatKey = "couplehearts_chats";
+const walletResetKey = "couplehearts_wallet_reset_v1";
 const defaultUser: User = { email: "", name: "", coins: 0, premium: false };
 const paystackScriptUrl = "https://js.paystack.co/v1/inline.js";
 let paystackScriptPromise: Promise<void> | null = null;
@@ -61,6 +62,16 @@ function readJson<T>(key: string, fallback: T): T {
   } catch {
     return fallback;
   }
+}
+function resetExistingWalletsOnce() {
+  if (localStorage.getItem(walletResetKey) === "done") return;
+  const users = readJson<LocalAccount[]>(allUsersKey, []);
+  localStorage.setItem(allUsersKey, JSON.stringify(users.map((user) => ({ ...user, coins: 0, premium: false, premiumSince: undefined, coinsPurchasedAt: undefined, planPurchasedAt: undefined }))));
+  const active = readJson<User | null>(userKey, null);
+  if (active) localStorage.setItem(userKey, JSON.stringify({ ...active, coins: 0, premium: false, premiumSince: undefined, coinsPurchasedAt: undefined, planPurchasedAt: undefined }));
+  localStorage.setItem(walletResetKey, "done");
+  window.dispatchEvent(new Event("storage"));
+  window.dispatchEvent(new CustomEvent("couplehearts:coins", { detail: 0 }));
 }
 function getAllUsers(): LocalAccount[] {
   const users = readJson<LocalAccount[]>(allUsersKey, []);
@@ -395,4 +406,4 @@ function Wallet() {
 function Perk({ icon, title, value, description, premium = false }: { icon: ReactNode; title: string; value: string; description: string; premium?: boolean }) { return <article className="perk-card"><div className={premium ? "perk-icon premium-icon" : "perk-icon"}>{icon}</div><div><div className="perk-name"><h3>{title}</h3>{premium && <Crown size={14} fill="currentColor" />}</div><strong>{value}</strong><p>{description}</p></div><button className="round-arrow"><ArrowRight size={15} /></button></article>; }
 function Protected({ children }: { children: ReactNode }) { const [, navigate] = useLocation(); const user = getUser(); useEffect(() => { if (!user) navigate("/login"); }, [navigate, user]); return user ? <Layout>{children}</Layout> : null; }
 function RootRedirect() { const [, navigate] = useLocation(); useEffect(() => { navigate(getUser() ? "/dashboard" : "/login"); }, [navigate]); return null; }
-export default function App() { return <Switch><Route path="/" component={RootRedirect} /><Route path="/login" component={Login} /><Route path="/register" component={Register} /><Route path="/dashboard"><Protected><Dashboard /></Protected></Route><Route path="/matches"><Protected><Matches /></Protected></Route><Route path="/chats"><Protected><Chats /></Protected></Route><Route path="/wallet"><Protected><Wallet /></Protected></Route><Route><RootRedirect /></Route></Switch>; }
+export default function App() { useEffect(() => { resetExistingWalletsOnce(); }, []); return <Switch><Route path="/" component={RootRedirect} /><Route path="/login" component={Login} /><Route path="/register" component={Register} /><Route path="/dashboard"><Protected><Dashboard /></Protected></Route><Route path="/matches"><Protected><Matches /></Protected></Route><Route path="/chats"><Protected><Chats /></Protected></Route><Route path="/wallet"><Protected><Wallet /></Protected></Route><Route><RootRedirect /></Route></Switch>; }
