@@ -31,7 +31,7 @@ const uploadedFemalePhotos = [
   "/profiles/natalie.jpeg",
 ];
 const uploadedMalePhotos = [
-  "/profiles/jayden.png",
+  "/profiles/jayden.jpeg",
   "/profiles/kyle.jpeg",
   "/profiles/gabriel.jpeg",
 ];
