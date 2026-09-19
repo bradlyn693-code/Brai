@@ -26,9 +26,9 @@ const sourcePhotos = [
 ];
 
 const uploadedFemalePhotos = [
-  "/manus-storage/julia_7b1416b0.jpeg",
-  "/manus-storage/pauline_4334ecfc.jpeg",
-  "/manus-storage/natalie_e306889e.jpeg",
+  "/profiles/julia.jpeg",
+  "/profiles/pauline.jpeg",
+  "/profiles/natalie.jpeg",
 ];
 const uploadedMalePhotos = [
   "/manus-storage/pasted_file_FZAj1F_image_d1e057f8.png",
