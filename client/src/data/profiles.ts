@@ -23,12 +23,12 @@ const sourcePhotos = [
   "https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=800&h=1000&fit=crop&crop=face",
   "https://images.unsplash.com/photo-1526510747491-58f928ec870f?w=800&h=1000&fit=crop&crop=face",
   "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=800&h=1000&fit=crop&crop=face",
-  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800&h=1000&fit=crop&crop=face",
-  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=1000&fit=crop&crop=face",
-  "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=800&h=1000&fit=crop&crop=face",
-  "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800&h=1000&fit=crop&crop=face",
-  "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=800&h=1000&fit=crop&crop=face",
-  "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=800&h=1000&fit=crop&crop=face",
+];
+
+const uploadedMalePhotos = [
+  "/manus-storage/man-outdoor_1155d1bb.jpeg",
+  "/manus-storage/man-coffee_014164c6.jpeg",
+  "/manus-storage/man-sunset_2a61d0ed.jpeg",
 ];
 
 const imagesFor = (url: string) => [url, crop(url, 900), crop(url, 1100, "faces")];
@@ -60,7 +60,7 @@ export const africanProfiles: AfricanProfile[] = details.map(([name, age, city, 
   interests: [...interests],
   verified: index % 4 !== 3,
   online: index % 3 !== 2,
-  images: imagesFor(sourcePhotos[index]),
+  images: index < 6 ? imagesFor(sourcePhotos[index]) : [uploadedMalePhotos[(index - 6) % uploadedMalePhotos.length], uploadedMalePhotos[(index - 6) % uploadedMalePhotos.length], uploadedMalePhotos[(index - 6) % uploadedMalePhotos.length]],
   match: 88 + ((index * 3) % 9),
 }));
 
