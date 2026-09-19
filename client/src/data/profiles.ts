@@ -43,9 +43,6 @@ const details = [
   ["Jayden", 28, "Addis Ababa", "Illustrator", "Colour, coffee, and conversations that wander somewhere beautiful.", ["Illustration", "Coffee", "Museums", "Dancing"]],
   ["Kyle", 34, "Abuja", "UX researcher", "Give me a good playlist, a plate of jollof, and a reason to stay out longer.", ["Tech", "Jollof", "Podcasts", "Running"]],
   ["Gabriel", 26, "Accra", "Marine biologist", "Ocean air, curious questions, and finding magic in the details.", ["Ocean life", "Cooking", "Photography", "Dancing"]],
-  ["Tunde", 30, "Kampala", "Community lead", "Big on kindness, long lunches, and making people feel at home.", ["Community", "Brunch", "Gardening", "Travel"]],
-  ["Malik", 26, "Cape Town", "Brand strategist", "A good view, a thoughtful playlist, and a reason to laugh every day.", ["Branding", "Hiking", "Photography", "Wine tasting"]],
-  ["Themba", 28, "Nairobi", "Marketing specialist", "Always planning the next adventure and the best meal after it.", ["Travel", "Wellness", "Books", "Cooking"]],
 ] as const;
 
 export const africanProfiles: AfricanProfile[] = details.map(([name, age, city, role, bio, interests], index) => ({
@@ -60,7 +57,7 @@ export const africanProfiles: AfricanProfile[] = details.map(([name, age, city, 
   interests: [...interests],
   verified: index % 4 !== 3,
   online: index % 3 !== 2,
-  images: index < 6 ? imagesFor(sourcePhotos[index]) : [uploadedMalePhotos[(index - 6) % uploadedMalePhotos.length], uploadedMalePhotos[(index - 6) % uploadedMalePhotos.length], uploadedMalePhotos[(index - 6) % uploadedMalePhotos.length]],
+  images: index < 6 ? imagesFor(sourcePhotos[index]) : [uploadedMalePhotos[index - 6]],
   match: 88 + ((index * 3) % 9),
 }));
 
