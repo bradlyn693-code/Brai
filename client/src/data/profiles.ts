@@ -31,9 +31,9 @@ const uploadedFemalePhotos = [
   "/profiles/natalie.jpeg",
 ];
 const uploadedMalePhotos = [
-  "/manus-storage/pasted_file_FZAj1F_image_d1e057f8.png",
-  "/manus-storage/man-coffee_014164c6.jpeg",
-  "/manus-storage/man-sunset_2a61d0ed.jpeg",
+  "/profiles/jayden.png",
+  "/profiles/kyle.jpeg",
+  "/profiles/gabriel.jpeg",
 ];
 
 const imagesFor = (url: string) => [url, crop(url, 900), crop(url, 1100, "faces")];
