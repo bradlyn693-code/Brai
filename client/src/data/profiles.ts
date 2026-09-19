@@ -25,6 +25,11 @@ const sourcePhotos = [
   "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=800&h=1000&fit=crop&crop=face",
 ];
 
+const uploadedFemalePhotos = [
+  "/manus-storage/julia_7b1416b0.jpeg",
+  "/manus-storage/pauline_4334ecfc.jpeg",
+  "/manus-storage/natalie_e306889e.jpeg",
+];
 const uploadedMalePhotos = [
   "/manus-storage/pasted_file_FZAj1F_image_d1e057f8.png",
   "/manus-storage/man-coffee_014164c6.jpeg",
@@ -34,12 +39,9 @@ const uploadedMalePhotos = [
 const imagesFor = (url: string) => [url, crop(url, 900), crop(url, 1100, "faces")];
 
 const details = [
-  ["Amara", 23, "Nairobi", "Product designer", "Soft life, big dreams, and a camera roll full of Nairobi sunsets.", ["Coffee", "Design", "Travel", "Live music"]],
-  ["Zainab", 24, "Lagos", "Creative director", "Lagos energy, good food, and the kind of laughter that makes everyone join in.", ["Foodie", "Fashion", "Afrobeats", "Beach days"]],
-  ["Aisha", 22, "Accra", "Architect", "Designing bright spaces and collecting tiny reasons to be grateful.", ["Architecture", "Art", "Books", "Road trips"]],
-  ["Nia", 25, "Kigali", "Founder", "Kigali mornings, thoughtful conversations, and a soft spot for kindness.", ["Entrepreneurship", "Hiking", "Tea", "Wellness"]],
-  ["Fatima", 21, "Mombasa", "Travel writer", "Salt in my hair, a notebook in my bag, and always one more place to explore.", ["Writing", "Beach days", "Languages", "Film"]],
-  ["Keisha", 26, "Johannesburg", "DJ and producer", "If the beat is right, I am probably dancing. Looking for someone warm and honest.", ["Music", "Vinyl", "Travel", "Street food"]],
+  ["Julia", 27, "Nairobi", "Product designer", "Soft life, big dreams, and a camera roll full of Nairobi sunsets.", ["Coffee", "Design", "Travel", "Live music"]],
+  ["Pauline", 24, "Lagos", "Creative director", "Lagos energy, good food, and the kind of laughter that makes everyone join in.", ["Foodie", "Fashion", "Afrobeats", "Beach days"]],
+  ["Natalie", 22, "Accra", "Architect", "Designing bright spaces and collecting tiny reasons to be grateful.", ["Architecture", "Art", "Books", "Road trips"]],
   ["Jayden", 22, "Addis Ababa", "Illustrator", "Colour, coffee, and conversations that wander somewhere beautiful.", ["Illustration", "Coffee", "Museums", "Dancing"]],
   ["Kyle", 34, "Abuja", "UX researcher", "Give me a good playlist, a plate of jollof, and a reason to stay out longer.", ["Tech", "Jollof", "Podcasts", "Running"]],
   ["Gabriel", 26, "Accra", "Marine biologist", "Ocean air, curious questions, and finding magic in the details.", ["Ocean life", "Cooking", "Photography", "Dancing"]],
@@ -48,16 +50,16 @@ const details = [
 export const africanProfiles: AfricanProfile[] = details.map(([name, age, city, role, bio, interests], index) => ({
   id: index + 1,
   name,
-  gender: index < 6 ? "female" : "male",
+  gender: index < 3 ? "female" : "male",
   age,
   city,
-  distance: [4, 7, 11, 9, 13, 18, 21, 26, 31, 34, 16, 6][index],
+  distance: [4, 7, 11, 21, 26, 31][index],
   role,
   bio,
   interests: [...interests],
   verified: index % 4 !== 3,
   online: index % 3 !== 2,
-  images: index < 6 ? imagesFor(sourcePhotos[index]) : [uploadedMalePhotos[index - 6]],
+  images: index < 3 ? [uploadedFemalePhotos[index]] : [uploadedMalePhotos[index - 3]],
   match: 88 + ((index * 3) % 9),
 }));
 
