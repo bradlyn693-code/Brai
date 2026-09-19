@@ -343,16 +343,15 @@ function ChatsInterface() {
 	    return () => { active = false; window.removeEventListener("storage", syncUser); window.removeEventListener("couplehearts:coins", syncUser); };
 	  }, []);
 
-	  useEffect(() => {
-	    let active = true;
+	  const warmPaystack = () => {
+	    if (window.PaystackPop || paystackStatus === "loading" || paystackStatus === "ready") return;
 	    setPaystackStatus("loading");
 	    ensurePaystackScript()
-	      .then(() => { if (active) setPaystackStatus("ready"); })
-	      .catch(() => { if (active) setPaystackStatus("error"); });
-	    return () => { active = false; };
-	  }, []);
+	      .then(() => setPaystackStatus("ready"))
+	      .catch(() => setPaystackStatus("error"));
+	  };
 
-  const showError = (message: string) => { setCheckoutError(message); setNotice(""); };
+	  const showError = (message: string) => { setCheckoutError(message); setNotice(""); };
 	  const buy = async (pkg: PaystackPackage) => {
 	    try {
 	      if (!window.PaystackPop) {
@@ -400,9 +399,9 @@ function ChatsInterface() {
 
       <section className="wallet-section paystack-packages-section">
         <div className="section-heading"><div><p className="eyebrow">Choose your energy</p><h2>Pick your perfect package</h2></div><span className={`secure-label paystack-status-${paystackStatus}`}><Lock size={13} /> {paystackStatus === "ready" ? "Secure checkout" : "Preparing checkout"}</span></div>
-        <div className="paystack-packages">{packages.map((pkg) => <article key={pkg.id} className={`wallet-package-card ${pkg.popular ? "is-popular" : ""} ${pkg.isPremium ? "is-vip" : ""}`}>
+	        <div className="paystack-packages">{packages.map((pkg) => <article key={pkg.id} className={`wallet-package-card ${pkg.popular ? "is-popular" : ""} ${pkg.isPremium ? "is-vip" : ""}`}>
           {pkg.badge && <span className="wallet-package-badge">{pkg.badge}</span>}
-          <div className="wallet-package-icon" aria-hidden="true">{pkg.icon}</div><h3>{pkg.name}</h3><div className="wallet-package-price"><strong>KSH {Math.round(pkg.amount / 100).toLocaleString()}</strong><span className="usd-equivalent">≈ ${pkg.price.toFixed(2)} USD</span></div><p>{pkg.description}</p><div className="wallet-package-coins"><CircleDollarSign size={16} /> {pkg.isPremium ? "Unlimited coins" : `${pkg.coins.toLocaleString()} coins`}</div><ul>{pkg.features.map((feature) => <li key={feature}><Check size={15} /> <span>{feature}</span></li>)}</ul><button className="wallet-buy-button" type="button" onClick={() => buy(pkg)}>{pkg.isPremium ? `Unlock VIP access · KSH ${Math.round(pkg.amount / 100).toLocaleString()}` : `Buy ${pkg.name} · KSH ${Math.round(pkg.amount / 100).toLocaleString()}`} <ArrowRight size={16} /></button>
+	          <div className="wallet-package-icon" aria-hidden="true">{pkg.icon}</div><h3>{pkg.name}</h3><div className="wallet-package-price"><strong>KSH {Math.round(pkg.amount / 100).toLocaleString()}</strong><span className="usd-equivalent">≈ ${pkg.price.toFixed(2)} USD</span></div><p>{pkg.description}</p><div className="wallet-package-coins"><CircleDollarSign size={16} /> {pkg.isPremium ? "Unlimited coins" : `${pkg.coins.toLocaleString()} coins`}</div><ul>{pkg.features.map((feature) => <li key={feature}><Check size={15} /> <span>{feature}</span></li>)}</ul><button className="wallet-buy-button" type="button" onPointerEnter={warmPaystack} onFocus={warmPaystack} onTouchStart={warmPaystack} onClick={() => buy(pkg)}>{pkg.isPremium ? `Unlock VIP access · KSH ${Math.round(pkg.amount / 100).toLocaleString()}` : `Buy ${pkg.name} · KSH ${Math.round(pkg.amount / 100).toLocaleString()}`} <ArrowRight size={16} /></button>
         </article>)}</div>
         <p className="paystack-note">💡 No redirect — secure KSH checkout via Paystack. M-Pesa &amp; Cards accepted. Theme matches Couple Hearts❤️</p>
         <a className={`paystack-fallback-link ${checkoutError ? "visible" : ""}`} href="https://paystack.shop/pay/o2dkau16m7" target="_blank" rel="noreferrer">Use secure fallback checkout</a>
