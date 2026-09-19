@@ -14,7 +14,7 @@ type Profile = AfricanProfile;
 type MatchRecord = Profile & { matchedAt: number; isNew?: boolean };
 type ChatMessage = { id: string; sender: "me" | "them"; text?: string; image?: string; gift?: string; voice?: boolean; followUp?: boolean; at: number; read?: boolean };
 type ChatRecord = { userId: number; messages: ChatMessage[]; lastAt: number };
-type User = { email: string; name: string; gender?: string; sex?: string; coins?: number; premium?: boolean; premiumSince?: number; coinsPurchasedAt?: number };
+type User = { email: string; name: string; gender?: string; sex?: string; coins?: number; premium?: boolean; premiumSince?: number; coinsPurchasedAt?: number; planPurchasedAt?: number };
 type LocalAccount = User & { password: string };
 
 type PaystackPackage = { id: string; name: string; coins: number; amount: number; price: number; icon: string; description: string; features: string[]; popular?: boolean; badge?: string; isPremium?: boolean };
@@ -83,6 +83,11 @@ function getUser(): User | null {
 function readCoins() { const value = Number(getUser()?.coins ?? 0); return Number.isFinite(value) ? Math.max(0, value) : 0; }
 function persistUser(user: User) {
   localStorage.setItem(userKey, JSON.stringify(user));
+  if (user.email) {
+    const users = getAllUsers();
+    const normalizedEmail = user.email.toLowerCase();
+    saveAllUsers(users.map((account) => account.email.toLowerCase() === normalizedEmail ? { ...account, ...user } : account));
+  }
   window.dispatchEvent(new Event("storage"));
   window.dispatchEvent(new CustomEvent("couplehearts:coins", { detail: user.coins ?? 0 }));
 }
@@ -176,6 +181,7 @@ function getUserCoins(user: User | null) {
   return Number.isFinite(value) ? Math.max(0, value) : 0;
 }
 function hasChatAccess(user: User | null) { return user?.premium === true || getUserCoins(user) > 0; }
+function hasPlanAccess(user: User | null) { return user?.premium === true || Boolean(user?.planPurchasedAt || user?.coinsPurchasedAt); }
 function useCurrentUser() {
   const [user, setUser] = useState<User | null>(() => getUser());
   useEffect(() => {
@@ -190,19 +196,21 @@ function useCoins() { return getUserCoins(useCurrentUser()); }
 function Layout({ children }: { children: ReactNode }) {
   const [location, navigate] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [showPaywall, setShowPaywall] = useState(false);
+  const [lockedArea, setLockedArea] = useState<"matches" | "chats" | null>(null);
   const currentUser = useCurrentUser();
   const user = currentUser || defaultUser;
   const coins = getUserCoins(user);
   const chatLocked = !hasChatAccess(user);
+  const matchesLocked = !hasPlanAccess(user);
   const handleNavClick = (event: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     setMobileOpen(false);
-    if (href === "/chats" && chatLocked) {
+    const isLocked = (href === "/chats" && chatLocked) || (href === "/matches" && matchesLocked);
+    if (isLocked) {
       event.preventDefault();
-      setShowPaywall(true);
+      setLockedArea(href === "/matches" ? "matches" : "chats");
     }
   };
-  return <div className="app-shell"><aside className={`sidebar ${mobileOpen ? "sidebar-open" : ""}`}><div><div className="sidebar-top"><Logo compact /><button className="mobile-close" onClick={() => setMobileOpen(false)}><X size={18} /></button></div><p className="sidebar-kicker">YOUR LOVE STORY, ON YOUR TERMS</p><nav className="sidebar-nav">{navItems.map((item) => { const Icon = item.icon; const locked = item.href === "/chats" && chatLocked; return <Link key={item.href} href={item.href} onClick={(event) => handleNavClick(event, item.href)} className={location.split("?")[0] === item.href ? "nav-item active" : "nav-item"}><Icon size={18} /><span>{item.label}</span>{locked ? <span className="nav-locked-badge">LOCKED</span> : item.badge && <span className="nav-badge">{item.badge}</span>}{item.href === "/wallet" && <span className="coin-count">{coins}<CircleDollarSign size={13} /></span>}</Link>; })}</nav></div><div className="sidebar-bottom"><div className="sidebar-tip"><Sparkles size={15} /><span><strong>Profile boost</strong><small>Get seen by more lovely people.</small></span><ChevronRight size={14} /></div><div className="user-card"><div className="user-meta"><strong>{user.email || "Signed-in account"}</strong><small>{coins} coins · Online now</small></div><button className="icon-button"><Settings size={17} /></button></div><button className="sign-out" onClick={() => { localStorage.removeItem(userKey); localStorage.removeItem("couplehearts_token"); navigate("/login"); }}><ArrowRight size={16} /> Sign out</button></div></aside>{mobileOpen && <button className="mobile-scrim" onClick={() => setMobileOpen(false)} aria-label="Close navigation" />}<main className="main-content"><header className="mobile-header"><button className="icon-button" onClick={() => setMobileOpen(true)}><Menu size={21} /></button><Logo compact /><button className="icon-button"><Bell size={19} /></button></header>{children}</main><nav className="mobile-nav">{navItems.map((item) => { const Icon = item.icon; const locked = item.href === "/chats" && chatLocked; return <Link key={item.href} href={item.href} onClick={(event) => handleNavClick(event, item.href)} className={location.split("?")[0] === item.href ? "mobile-nav-item active" : "mobile-nav-item"}><Icon size={19} /><span>{item.label}</span>{locked && <span className="mobile-nav-locked-badge">LOCKED</span>}</Link>; })}</nav>{showPaywall && <div className="chat-paywall-backdrop" role="dialog" aria-modal="true" aria-labelledby="chat-paywall-title" onClick={() => setShowPaywall(false)}><div className="chat-paywall-card" onClick={(event) => event.stopPropagation()}><button className="chat-paywall-close" type="button" aria-label="Close" onClick={() => setShowPaywall(false)}>×</button><div className="chat-paywall-icon">🔒💬</div><h2 id="chat-paywall-title">Chats Locked</h2><p>You need coins to chat 😍 Buy coins to unlock your conversations and start connecting.</p><button className="primary-button chat-paywall-buy" type="button" onClick={() => { setShowPaywall(false); navigate("/wallet"); }}>Buy Coins <WalletCards size={17} /></button></div></div>}</div>;
+  return <div className="app-shell"><aside className={`sidebar ${mobileOpen ? "sidebar-open" : ""}`}><div><div className="sidebar-top"><Logo compact /><button className="mobile-close" onClick={() => setMobileOpen(false)}><X size={18} /></button></div><p className="sidebar-kicker">YOUR LOVE STORY, ON YOUR TERMS</p><nav className="sidebar-nav">{navItems.map((item) => { const Icon = item.icon; const locked = (item.href === "/chats" && chatLocked) || (item.href === "/matches" && matchesLocked); return <Link key={item.href} href={item.href} onClick={(event) => handleNavClick(event, item.href)} className={location.split("?")[0] === item.href ? "nav-item active" : "nav-item"}><Icon size={18} /><span>{item.label}</span>{locked ? <span className="nav-locked-badge">LOCKED</span> : item.badge && <span className="nav-badge">{item.badge}</span>}{item.href === "/wallet" && <span className="coin-count">{coins}<CircleDollarSign size={13} /></span>}</Link>; })}</nav></div><div className="sidebar-bottom"><div className="sidebar-tip"><Sparkles size={15} /><span><strong>Profile boost</strong><small>Get seen by more lovely people.</small></span><ChevronRight size={14} /></div><div className="user-card"><div className="user-meta"><strong>{user.email || "Signed-in account"}</strong><small>{coins} coins · Online now</small></div><button className="icon-button"><Settings size={17} /></button></div><button className="sign-out" onClick={() => { localStorage.removeItem(userKey); localStorage.removeItem("couplehearts_token"); navigate("/login"); }}><ArrowRight size={16} /> Sign out</button></div></aside>{mobileOpen && <button className="mobile-scrim" onClick={() => setMobileOpen(false)} aria-label="Close navigation" />}<main className="main-content"><header className="mobile-header"><button className="icon-button" onClick={() => setMobileOpen(true)}><Menu size={21} /></button><Logo compact /><button className="icon-button"><Bell size={19} /></button></header>{children}</main><nav className="mobile-nav">{navItems.map((item) => { const Icon = item.icon; const locked = (item.href === "/chats" && chatLocked) || (item.href === "/matches" && matchesLocked); return <Link key={item.href} href={item.href} onClick={(event) => handleNavClick(event, item.href)} className={location.split("?")[0] === item.href ? "mobile-nav-item active" : "mobile-nav-item"}><Icon size={19} /><span>{item.label}</span>{locked && <span className="mobile-nav-locked-badge">LOCKED</span>}</Link>; })}</nav>{lockedArea && <div className="chat-paywall-backdrop" role="dialog" aria-modal="true" aria-labelledby="access-paywall-title" onClick={() => setLockedArea(null)}><div className="chat-paywall-card" onClick={(event) => event.stopPropagation()}><button className="chat-paywall-close" type="button" aria-label="Close" onClick={() => setLockedArea(null)}>×</button><div className="chat-paywall-icon">{lockedArea === "matches" ? "🔒💖" : "🔒💬"}</div><h2 id="access-paywall-title">{lockedArea === "matches" ? "Matches Locked" : "Chats Locked"}</h2><p>{lockedArea === "matches" ? "Buy a plan to unlock your matches and see who connected with you." : "You need coins to chat 😍 Buy coins to unlock your conversations and start connecting."}</p><button className="primary-button chat-paywall-buy" type="button" onClick={() => { setLockedArea(null); navigate("/wallet"); }}>Buy a plan <WalletCards size={17} /></button></div></div>}</div>;
 }
 function PageHeader({ eyebrow, title, description, action }: { eyebrow: string; title: string; description: string; action?: ReactNode }) { return <div className="page-header"><div><p className="eyebrow">{eyebrow}</p><h1>{title}</h1><p className="page-description">{description}</p></div>{action}</div>; }
 function LowCoinsModal({ needed, onClose }: { needed: number; onClose: () => void }) { const coins = useCoins(); return <div className="modal-backdrop" onClick={onClose}><motion.div className="utility-modal low-coins-modal" initial={{ opacity: 0, scale: .95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} onClick={(event) => event.stopPropagation()}><button className="modal-close" onClick={onClose}><X size={18} /></button><div className="utility-icon gold"><CircleDollarSign size={25} /></div><p className="eyebrow">Your sparkle needs a top-up</p><h2>Need coins! Go to Wallet</h2><p>You need {needed} coins, but your balance is {coins || 0}. Buy a little magic to keep connecting.</p><Link href="/wallet" className="primary-button" onClick={onClose}>Go to Wallet <WalletCards size={17} /></Link><button className="text-link keep-swiping" onClick={onClose}>Maybe later</button></motion.div></div>; }
@@ -231,8 +239,12 @@ function Dashboard() {
 }
 
 function Matches() {
+  const user = useCurrentUser();
   const [matches, setMatches] = useState<MatchRecord[]>(loadMatches); const [filter, setFilter] = useState("All");
   useEffect(() => { const sync = () => setMatches(loadMatches()); window.addEventListener("couplehearts:matches", sync); return () => window.removeEventListener("couplehearts:matches", sync); }, []);
+  if (!hasPlanAccess(user)) {
+    return <div className="page matches-page"><PageHeader eyebrow="Your little constellation" title="🔒 Matches Locked" description="Your connections are waiting behind a Couple Hearts plan." /><section className="chat-lock-card" aria-labelledby="matches-lock-title"><div className="chat-lock-icon" aria-hidden="true"><Lock size={28} /></div><p className="eyebrow">A little more magic</p><h2 id="matches-lock-title">Unlock your matches 💖</h2><p className="chat-lock-message">Buy a plan to see who connected with you, revisit your sparks, and start a conversation.</p><div className="chat-lock-balance"><CircleDollarSign size={18} /><span>Current balance</span><strong>{getUserCoins(user)}</strong><small>coins</small></div><Link href="/wallet" className="primary-button chat-lock-button"><WalletCards size={17} /> Buy a plan to unlock</Link></section></div>;
+  }
   const cities = ["All", ...Array.from(new Set(matches.map((item) => item.city)))]; const visible = filter === "All" ? matches : matches.filter((item) => item.city === filter);
   return <div className="page matches-page"><PageHeader eyebrow="Your little constellation" title="Matches ✨" description="People who made your heart pause for a second." action={<Link href="/dashboard" className="primary-button"><Sparkles size={17} /> Discover more</Link>} /><div className="match-filter-row">{cities.map((city) => <button key={city} className={filter === city ? "filter-chip active" : "filter-chip"} onClick={() => setFilter(city)}>{city}</button>)}</div><div className="matches-grid">{visible.map((profile) => <article className="match-card" key={profile.id}><div className="match-card-image"><SafeImage src={profile.images[0]} alt={profile.name} /><span className={profile.online ? "online-dot" : "online-dot offline"} /><span className="match-score">{matchPercent(profile)}%</span></div><div className="match-card-body"><div className="match-name-row"><div><h3>{profile.name}, {profile.age}</h3><p><MapPin size={12} /> {profile.city}</p></div>{profile.verified && <ShieldCheck size={16} className="verified-icon" />}</div><p className="match-bio">{profile.bio}</p><div className="profile-tags light-tags">{profile.interests.slice(0, 3).map((tag) => <span key={tag}>{tag}</span>)}</div><div className="match-card-actions"><Link href={`/chats?user=${profile.id}`} className="primary-button"><MessageCircle size={15} /> Message</Link><button className="icon-button"><Heart size={18} fill="currentColor" /></button></div></div></article>)}{!visible.length && <div className="empty-state"><Heart size={28} /><h3>No matches in this city yet.</h3><p>Discover someone new and let the story unfold.</p><Link href="/dashboard" className="primary-button">Explore profiles</Link></div>}</div></div>;
 }
@@ -332,8 +344,8 @@ function Wallet() {
         callback: () => {
           const current = getUser() || { ...defaultUser, ...user };
           const next: User = pkg.isPremium
-            ? { ...current, coins: 99999, premium: true, premiumSince: Date.now(), coinsPurchasedAt: Date.now() }
-            : { ...current, coins: Math.max(0, Number(current.coins ?? 0)) + pkg.coins, premium: Boolean(current.premium), coinsPurchasedAt: Date.now() };
+            ? { ...current, coins: 99999, premium: true, premiumSince: Date.now(), coinsPurchasedAt: Date.now(), planPurchasedAt: Date.now() }
+            : { ...current, coins: Math.max(0, Number(current.coins ?? 0)) + pkg.coins, premium: Boolean(current.premium), coinsPurchasedAt: Date.now(), planPurchasedAt: Date.now() };
           persistUser(next);
           setUser(next);
           setSuccessPackage(pkg);
