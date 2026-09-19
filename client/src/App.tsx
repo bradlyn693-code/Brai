@@ -335,19 +335,30 @@ function ChatsInterface() {
     { id: "unlimited", name: "VIP Unlimited", coins: 99999, amount: 400000, price: 30.77, icon: "👑", badge: "UNLIMITED", isPremium: true, description: "VIP Couple! 💑❤️ Unlimited chats, likes, gifts, see who liked you 😍, Verified ✅", features: ["Unlimited Chats", "Super Likes & Boosts", "See Who Liked You", "VIP Verified Badge", "Priority Support"] },
   ];
 
-  useEffect(() => {
-    let active = true;
-    const syncUser = () => { if (active) setUser({ ...defaultUser, ...(getUser() || {}) }); };
-    window.addEventListener("storage", syncUser);
-    window.addEventListener("couplehearts:coins", syncUser);
-    return () => { active = false; window.removeEventListener("storage", syncUser); window.removeEventListener("couplehearts:coins", syncUser); };
-  }, []);
+	  useEffect(() => {
+	    let active = true;
+	    const syncUser = () => { if (active) setUser({ ...defaultUser, ...(getUser() || {}) }); };
+	    window.addEventListener("storage", syncUser);
+	    window.addEventListener("couplehearts:coins", syncUser);
+	    return () => { active = false; window.removeEventListener("storage", syncUser); window.removeEventListener("couplehearts:coins", syncUser); };
+	  }, []);
+
+	  useEffect(() => {
+	    let active = true;
+	    setPaystackStatus("loading");
+	    ensurePaystackScript()
+	      .then(() => { if (active) setPaystackStatus("ready"); })
+	      .catch(() => { if (active) setPaystackStatus("error"); });
+	    return () => { active = false; };
+	  }, []);
 
   const showError = (message: string) => { setCheckoutError(message); setNotice(""); };
-  const buy = async (pkg: PaystackPackage) => {
-    try {
-      setPaystackStatus("loading");
-      if (!window.PaystackPop) await ensurePaystackScript();
+	  const buy = async (pkg: PaystackPackage) => {
+	    try {
+	      if (!window.PaystackPop) {
+	        setPaystackStatus("loading");
+	        await ensurePaystackScript();
+	      }
       if (!window.PaystackPop) throw new Error("Paystack checkout is unavailable.");
       setPaystackStatus("ready");
 	      if (!paystackPublicKey) throw new Error("Paystack public key is not configured.");
