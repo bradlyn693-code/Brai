@@ -62,12 +62,17 @@ function readJson<T>(key: string, fallback: T): T {
     return fallback;
   }
 }
-function getAllUsers(): LocalAccount[] { return readJson<LocalAccount[]>(allUsersKey, []); }
+function getAllUsers(): LocalAccount[] {
+  const users = readJson<LocalAccount[]>(allUsersKey, []);
+  const normalized = users.map((user) => !user.premium && !user.coinsPurchasedAt && Number(user.coins ?? 0) > 0 ? { ...user, coins: 0 } : user);
+  if (JSON.stringify(normalized) !== JSON.stringify(users)) localStorage.setItem(allUsersKey, JSON.stringify(normalized));
+  return normalized;
+}
 function saveAllUsers(users: LocalAccount[]) { localStorage.setItem(allUsersKey, JSON.stringify(users)); }
 function ensureSeedAccount() {
   const users = getAllUsers();
   if (users.some((user) => user.email.toLowerCase() === "bradln021@gmail.com")) return;
-  saveAllUsers([...users, { email: "bradln021@gmail.com", password: "Password123!", name: "Bradlyn", coins: 20, premium: false }]);
+  saveAllUsers([...users, { email: "bradln021@gmail.com", password: "Password123!", name: "Bradlyn", coins: 0, premium: false }]);
 }
 function getUser(): User | null {
   const user = readJson<User | null>(userKey, null);
@@ -171,7 +176,7 @@ function Login() {
 function Register() {
   const [, navigate] = useLocation(); const [form, setForm] = useState({ name: "", email: "", age: "", gender: "", password: "", confirm: "" }); const [agreed, setAgreed] = useState(false); const [error, setError] = useState(""); const update = (key: string, value: string) => setForm((current) => ({ ...current, [key]: value }));
   useEffect(() => { ensureSeedAccount(); }, []);
-  const submit = (event: React.FormEvent) => { event.preventDefault(); const normalizedEmail = form.email.trim().toLowerCase(); if (!form.name || !normalizedEmail || !form.age || !form.gender || form.password.length < 6 || form.password !== form.confirm || !agreed) { setError("Complete the fields, match your passwords, and agree to the terms."); return; } const users = getAllUsers(); if (users.some((user) => user.email.toLowerCase() === normalizedEmail)) { setError("An account with this email already exists. Please log in."); return; } const account: LocalAccount = { email: normalizedEmail, password: form.password, name: form.name.trim(), gender: form.gender.toLowerCase(), coins: 20, premium: false }; saveAllUsers([...users, account]); localStorage.setItem(userKey, JSON.stringify(account)); navigate("/dashboard"); };
+  const submit = (event: React.FormEvent) => { event.preventDefault(); const normalizedEmail = form.email.trim().toLowerCase(); if (!form.name || !normalizedEmail || !form.age || !form.gender || form.password.length < 6 || form.password !== form.confirm || !agreed) { setError("Complete the fields, match your passwords, and agree to the terms."); return; } const users = getAllUsers(); if (users.some((user) => user.email.toLowerCase() === normalizedEmail)) { setError("An account with this email already exists. Please log in."); return; } const account: LocalAccount = { email: normalizedEmail, password: form.password, name: form.name.trim(), gender: form.gender.toLowerCase(), coins: 0, premium: false }; saveAllUsers([...users, account]); localStorage.setItem(userKey, JSON.stringify(account)); navigate("/dashboard"); };
   return <AuthShell eyebrow="Start something real" title="Create your account 🚀" subtitle="A few details, then the fun part: meeting someone lovely." sideTitle="Meet with intention."><form className="auth-form register-form" onSubmit={submit}><div className="register-grid"><label>Full name<input value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="Alex Morgan" /></label><label>Email<input value={form.email} onChange={(e) => update("email", e.target.value)} type="email" placeholder="you@example.com" /></label><label>Age<select value={form.age} onChange={(e) => update("age", e.target.value)}><option value="">Select age</option>{Array.from({ length: 43 }, (_, i) => <option key={i + 18}>{i + 18}</option>)}</select></label><label>Gender<select value={form.gender} onChange={(e) => update("gender", e.target.value)}><option value="">Choose one</option><option>Female</option><option>Male</option><option>Other</option></select></label></div><label>Password<input value={form.password} onChange={(e) => update("password", e.target.value)} type="password" placeholder="6+ characters" /></label><label>Confirm password<input value={form.confirm} onChange={(e) => update("confirm", e.target.value)} type="password" placeholder="Repeat your password" /></label><button type="button" className="upload-zone"><span className="upload-icon"><ImagePlus size={20} /></span><span><strong>Add a profile photo</strong><small>Add 2+ photos = 3x more matches 📸</small></span><ChevronRight size={17} /></button><label className="checkbox-label terms"><input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} /><span>I agree to the Couple Hearts Terms 💑</span></label>{error && <p className="form-error">{error}</p>}<button className="primary-button" type="submit">Create Couple Account <ArrowRight size={17} /></button><p className="auth-switch">Already have an account? <Link href="/login">Sign in</Link></p></form></AuthShell>;
 }
 

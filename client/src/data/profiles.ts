@@ -26,7 +26,7 @@ const sourcePhotos = [
 ];
 
 const uploadedMalePhotos = [
-  "/manus-storage/man-outdoor_1155d1bb.jpeg",
+  "/manus-storage/pasted_file_FZAj1F_image_d1e057f8.png",
   "/manus-storage/man-coffee_014164c6.jpeg",
   "/manus-storage/man-sunset_2a61d0ed.jpeg",
 ];
@@ -40,7 +40,7 @@ const details = [
   ["Nia", 25, "Kigali", "Founder", "Kigali mornings, thoughtful conversations, and a soft spot for kindness.", ["Entrepreneurship", "Hiking", "Tea", "Wellness"]],
   ["Fatima", 21, "Mombasa", "Travel writer", "Salt in my hair, a notebook in my bag, and always one more place to explore.", ["Writing", "Beach days", "Languages", "Film"]],
   ["Keisha", 26, "Johannesburg", "DJ and producer", "If the beat is right, I am probably dancing. Looking for someone warm and honest.", ["Music", "Vinyl", "Travel", "Street food"]],
-  ["Jayden", 28, "Addis Ababa", "Illustrator", "Colour, coffee, and conversations that wander somewhere beautiful.", ["Illustration", "Coffee", "Museums", "Dancing"]],
+  ["Jayden", 22, "Addis Ababa", "Illustrator", "Colour, coffee, and conversations that wander somewhere beautiful.", ["Illustration", "Coffee", "Museums", "Dancing"]],
   ["Kyle", 34, "Abuja", "UX researcher", "Give me a good playlist, a plate of jollof, and a reason to stay out longer.", ["Tech", "Jollof", "Podcasts", "Running"]],
   ["Gabriel", 26, "Accra", "Marine biologist", "Ocean air, curious questions, and finding magic in the details.", ["Ocean life", "Cooking", "Photography", "Dancing"]],
 ] as const;
